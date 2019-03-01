@@ -24,6 +24,8 @@
     ],
     "ios": {
       "supportsTablet": true
-    }
+    },
+    "description": "The BullETin Magazine",
+    "githubUrl": "https://github.com/ALEEF02/Bulletin-Magazine-Mobile-App"
   }
 }

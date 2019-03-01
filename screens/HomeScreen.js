@@ -21,7 +21,6 @@ import {
 
 import firebase from "firebase";
 import PDFReader from 'rn-pdf-reader-js';
-//import RNFetchBlob from 'react-native-fetch-blob';
 
 // Initialize Firebase
 var config = {
@@ -36,8 +35,76 @@ firebase.initializeApp(config);
 var storage = firebase.storage();
 var storageRef = storage.ref();
 var tempMag = storageRef.child('issue 6 2.pdf');
+var source = {uri:'https://s2.q4cdn.com/235752014/files/doc_downloads/test.pdf',cache:true};
+/*var allPDF = storage.getFiles({directory:'/'}, function(err, files, nextQuery, apiResponse) {
+	console.log(files);
+});*/
 
-console.log(tempMag.getDownloadURL());
+class PDF extends React.Component {
+	constructor(props) {
+		super(props);
+		this.state = {PDF: false};
+
+		tempMag.getDownloadURL().then(function(url) {
+			var xhr = new XMLHttpRequest();
+			xhr.responseType = 'blob';
+			xhr.onload = function(event) {
+				var blob = xhr.response;
+				console.log('blob from xhr: ' + JSON.stringify(blob));
+				var reader = new FileReader();
+				reader.onload = function() {
+					source.uri = reader.result;
+					this.setState(previousState => (
+						{PDF: !previousState.PDF}
+					))
+				}.bind(this);
+				reader.readAsDataURL(blob);
+			}.bind(this);
+			xhr.open('GET', url);
+			xhr.send();
+			
+			
+		}.bind(this)).catch(function(error) {
+			return (
+				<View style={styles.container}>
+					<Text>Error: {error}</Text>
+				</View>
+			);
+		});
+	}
+	
+	render() {
+		if (!this.state.PDF) {
+			return (
+				<View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
+					<Text>Loading Articles...</Text>
+				</View>
+			);
+		}
+		
+		return (
+			<View style={styles.container}>
+				<PDFReader
+					source={source}
+					onLoadComplete={(numberOfPages,filePath)=>{
+						console.log(`number of pages: ${numberOfPages}`);
+					}}
+					onPageChanged={(page,numberOfPages)=>{
+						console.log(`current page: ${page}`);
+					}}
+					onError={(error)=>{
+						console.log(error);
+					}}
+					style={styles.pdf}/>
+			</View>
+			//const source = require('https://firebasestorage.googleapis.com/v0/b/bulletin-magazine.appspot.com/o/issue%206%202.pdf?alt=media&token=e9e915db-1a70-47a2-ba56-63ae8404d606');  // ios only
+			//const source = {uri:'bundle-assets://https://firebasestorage.googleapis.com/v0/b/bulletin-magazine.appspot.com/o/issue%206%202.pdf?alt=media&token=e9e915db-1a70-47a2-ba56-63ae8404d606'};
+
+			//const source = {uri:'file:///sdcard/test.pdf'};
+			//const source = {uri:"data:application/pdf;base64,..."};
+		);
+	}	
+}
 
 export default class HomeScreen extends React.Component {
 	static navigationOptions = {
@@ -45,32 +112,15 @@ export default class HomeScreen extends React.Component {
 	};
 
 	render() {
-		const source = {uri:'https://s2.q4cdn.com/235752014/files/doc_downloads/test.pdf',cache:true};
-		//const source = require('https://firebasestorage.googleapis.com/v0/b/bulletin-magazine.appspot.com/o/issue%206%202.pdf?alt=media&token=e9e915db-1a70-47a2-ba56-63ae8404d606');  // ios only
-        //const source = {uri:'bundle-assets://https://firebasestorage.googleapis.com/v0/b/bulletin-magazine.appspot.com/o/issue%206%202.pdf?alt=media&token=e9e915db-1a70-47a2-ba56-63ae8404d606'};
-
-        //const source = {uri:'file:///sdcard/test.pdf'};
-        //const source = {uri:"data:application/pdf;base64,..."};
-
         return (
             <View style={styles.container}>
-                <PDFReader
-                    source={source}
-                    onLoadComplete={(numberOfPages,filePath)=>{
-                        console.log(`number of pages: ${numberOfPages}`);
-                    }}
-                    onPageChanged={(page,numberOfPages)=>{
-                        console.log(`current page: ${page}`);
-                    }}
-                    onError={(error)=>{
-                        console.log(error);
-                    }}
-                    style={styles.pdf}/>
+                <PDF/>
             </View>
         );
 	}
 }
 
+//App styling, similar to CSS
 const styles = StyleSheet.create({
 	container: {
 		flex: 1,
