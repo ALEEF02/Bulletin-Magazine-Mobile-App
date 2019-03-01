@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "BulletinMagaineFirebaseStorage": "bulletin-magazine",
+    "default": "bulletin-magazine"
+  }
+}
