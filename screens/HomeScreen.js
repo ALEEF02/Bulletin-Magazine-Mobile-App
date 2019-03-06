@@ -1,9 +1,12 @@
 import React from 'react';
+import Touchable from 'react-native-platform-touchable';
 import {
 	Dimensions,
 	Image,
+	ListView,
 	Platform,
 	ScrollView,
+	SectionList,
 	StyleSheet,
 	Text,
 	TouchableOpacity,
@@ -13,6 +16,7 @@ import {
 import {
 	WebBrowser,
 	Constants,
+	Icon,
 } from 'expo';
 
 import {
@@ -21,8 +25,19 @@ import {
 
 import firebase from "firebase";
 import PDFReader from 'rn-pdf-reader-js';
+import TabBarIcon from '../components/TabBarIcon';
+import Colors from '../constants/Colors';
+
+/*import {
+	articleList,
+	storageRef,
+	allArticlesRef,
+	addArticlesToList,
+} from '../data/GetArticles';
+*/
 
 // Initialize Firebase
+
 var config = {
 	apiKey: "AIzaSyAvFJ1VI_UNcHd2KJavI4on7PuQUTb1fCU",
 	authDomain: "bulletin-magazine.firebaseapp.com",
@@ -33,19 +48,19 @@ var config = {
 };
 firebase.initializeApp(config);
 var storage = firebase.storage();
+var database = firebase.database();
 var storageRef = storage.ref();
-var tempMag = storageRef.child('issue 6 2.pdf');
+
+var articleList = [];
+var currentMag = storageRef.child('issue 6 2.pdf');
 var source = {uri:'https://s2.q4cdn.com/235752014/files/doc_downloads/test.pdf',cache:true};
-/*var allPDF = storage.getFiles({directory:'/'}, function(err, files, nextQuery, apiResponse) {
-	console.log(files);
-});*/
 
 class PDF extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {PDF: false};
 
-		tempMag.getDownloadURL().then(function(url) {
+		currentMag.getDownloadURL().then(function(url) {
 			var xhr = new XMLHttpRequest();
 			xhr.responseType = 'blob';
 			xhr.onload = function(event) {
@@ -106,15 +121,192 @@ class PDF extends React.Component {
 	}	
 }
 
+class SectionListItem extends React.Component {
+		_openArticle = (articleName) => {
+			console.log('Clicked ' + articleName);
+			currentMag = articleName;
+			return(
+				<View>
+					<Touchable
+						style={styles.option}
+						background={Touchable.Ripple('#ccc', false)}
+						onPress={() => this._goBack()}>
+						<View style={{
+							flex: 1,
+							flexDirection: 'column',
+							backgroundColor: '#FFFFFF'
+						}}>
+							<Icon.Ionicons
+								name={
+								Platform.OS === 'ios'? 
+									`ios-arrow-back`
+									: 'md-arrow-back'
+								}
+								size={26}
+								style={{ marginBottom: -3 }}
+								color={Colors.tabIconDefault}
+							/>
+							<Text style={{
+								color: '#122EFF',
+								fontSize: 16,
+							}}>
+								Back
+							</Text>
+						</View>
+					</Touchable>
+					<PDF/>
+				</View>
+			);
+		}
+		
+		_goBack = () => {
+			return (
+				<View style={styles.container}>
+					<ArticleList/>
+				</View>
+			);
+		}
+	
+	render() {
+		return (
+			<View>
+				<Touchable
+					style={styles.option}
+					background={Touchable.Ripple('#ccc', false)}
+					onPress={() => this._openArticle(this.props.item.fileName)}>
+					<View style={{
+						flex: 1,
+						flexDirection: 'column',
+						backgroundColor: '#FFFFFF'
+					}}>
+						<Text style={{
+							fontSize: 16,
+							fontWeight: 'bold',
+							color: '#000000',
+							marginLeft: 15,
+							marginRight: 10,
+						}}>
+							{this.props.item.title}
+						</Text>
+						<Text style={{
+							fontSize: 16,
+							color: '#000000',
+							marginLeft: 20,
+							marginRight: 10,
+						}}>
+							{this.props.item.date}
+						</Text>
+						<View style={{
+							backgroundColor: '#CCCCCC',
+							height: 1,
+							margin: 6,
+							marginLeft: 15,
+							marginRight: 10
+						}}>				
+						</View>
+					</View>
+				</Touchable>
+			</View>
+		);
+	}
+}
+
+class SectionHeader extends React.Component {
+	render() {
+		return (
+			<View style={{
+				flex: 1,
+				backgroundColor: '#222222',
+			}}>
+				<Text style={{
+					fontSize: 16,
+					fontWeight: 'bold',
+					color: 'white',
+					marginTop: 30,
+					marginLeft: 20,
+					marginBottom: 15
+				}}>{this.props.section.title}
+				</Text>
+			</View>
+		);
+	}
+}
+
+class ArticleList extends React.Component {
+	constructor(props) {
+		super(props);
+		this.state = {articleListAquired: false};
+		
+		var allArticles;
+		var allArticlesRef = firebase.database().ref('articles').once('value').then(function(snapshot) {
+			allArticles = snapshot.val();
+			console.log('All articles: ' + JSON.stringify(allArticles));
+			var tempArticleObj = {data:[], title: 'Articles'};
+			Object.keys(allArticles).forEach(function (item) {
+				tempArticleObj['data'].push({
+					title: allArticles[item].title,
+					date: allArticles[item].formatDate,
+					fileName: allArticles[item].fileName
+				});
+			});
+			articleList.push(tempArticleObj);
+			this.setState(previousState => (
+				{articleListAquired: !previousState.articleListAquired}
+			))
+		}.bind(this));
+	}
+	
+	render() {
+		if (!this.state.articleListAquired) {
+			return (
+				<View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
+					<Text>Loading Articles...</Text>
+				</View>
+			);
+		}
+		
+		return (
+			<View style={styles.container}>
+				<SectionList
+					renderItem={({item, index}) => {
+						return (
+							<SectionListItem
+								item={item}
+								index={index}/>
+						);
+					}}
+					renderSectionHeader={({section}) => {
+						return (
+							<SectionHeader section={section}/>
+						);
+					}}
+					sections={articleList}
+					keyExtractor={(item, index) => item.title}
+				>
+				</SectionList>
+			</View>
+		);
+	}
+}
+
 export default class HomeScreen extends React.Component {
 	static navigationOptions = {
+		title: 'Articles',
 		header: null,
 	};
-
+	
 	render() {
+		/*if (!this.state.articleListAquired) {
+			return (
+				<View style={styles.container}>
+					<Text>Loading Articles...</Text>
+				</View>
+			);
+		}*/
+		
         return (
             <View style={styles.container}>
-                <PDF/>
+				<ArticleList/>
             </View>
         );
 	}
@@ -213,5 +405,23 @@ const styles = StyleSheet.create({
 	helpLinkText: {
 		fontSize: 14,
 		color: '#2e78b7',
+	},
+	optionsTitleText: {
+		fontSize: 16,
+		marginLeft: 15,
+		marginTop: 9,
+		marginBottom: 12,
+	},
+	optionIconContainer: {
+		marginRight: 9,
+	},
+	option: {
+		backgroundColor: '#fdfdfd',
+		borderBottomWidth: StyleSheet.hairlineWidth,
+		borderBottomColor: '#EDEDED',
+	},
+	optionText: {
+		fontSize: 15,
+		marginTop: 1,
 	},
 });
