@@ -60,6 +60,8 @@ class PDF extends React.Component {
 		super(props);
 		this.state = {PDF: false};
 
+		console.log('Current Mag: ' + currentMag);
+		
 		currentMag.getDownloadURL().then(function(url) {
 			var xhr = new XMLHttpRequest();
 			xhr.responseType = 'blob';
@@ -122,11 +124,40 @@ class PDF extends React.Component {
 }
 
 class SectionListItem extends React.Component {
-		_openArticle = (articleName) => {
-			console.log('Clicked ' + articleName);
-			currentMag = articleName;
+	constructor(props) {
+		super(props);
+		this.state = {openArticle: false};
+		this.getValue = this.getValue.bind(this);
+    }
+
+    getValue() {
+        return this.state.openArticle;
+    }
+	
+	_openArticle = (articleName) => {
+		console.log('Clicked ' + articleName);
+		currentMag = storageRef.child(articleName);
+		this.setState(previousState => (
+			{openArticle: !previousState.openArticle}
+		));
+	}
+	
+	_goBack = () => {
+		return (
+			<View style={styles.container}>
+				<ArticleList/>
+			</View>
+		);
+	}
+	
+	render() {
+		if (this.state.openArticle) {
+			console.log('Beginning main article render');
 			return(
-				<View>
+				<View style={{
+					position: 'relative',
+					flex: 0
+				}}>
 					<Touchable
 						style={styles.option}
 						background={Touchable.Ripple('#ccc', false)}
@@ -159,15 +190,6 @@ class SectionListItem extends React.Component {
 			);
 		}
 		
-		_goBack = () => {
-			return (
-				<View style={styles.container}>
-					<ArticleList/>
-				</View>
-			);
-		}
-	
-	render() {
 		return (
 			<View>
 				<Touchable
@@ -260,7 +282,7 @@ class ArticleList extends React.Component {
 		if (!this.state.articleListAquired) {
 			return (
 				<View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
-					<Text>Loading Articles...</Text>
+					<Text>Loading Article...</Text>
 				</View>
 			);
 		}
