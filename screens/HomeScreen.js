@@ -92,6 +92,7 @@ class PDF extends React.Component {
 	
 	render() {
 		if (!this.state.PDF) {
+			console.log('Waiting for ' + currentMag + ' to download');
 			return (
 				<View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
 					<Text>Loading Articles...</Text>
@@ -104,13 +105,13 @@ class PDF extends React.Component {
 				<PDFReader
 					source={source}
 					onLoadComplete={(numberOfPages,filePath)=>{
-						console.log(`number of pages: ${numberOfPages}`);
+						console.log('Number of pages: ${numberOfPages}');
 					}}
 					onPageChanged={(page,numberOfPages)=>{
-						console.log(`current page: ${page}`);
+						console.log('Current page: ${page}');
 					}}
 					onError={(error)=>{
-						console.log(error);
+						console.log('Error in rendering article: ' + error);
 					}}
 					style={styles.pdf}/>
 			</View>
@@ -164,7 +165,7 @@ class SectionListItem extends React.Component {
 						onPress={() => this._goBack()}>
 						<View style={{
 							flex: 1,
-							flexDirection: 'column',
+							flexDirection: 'row',
 							backgroundColor: '#FFFFFF'
 						}}>
 							<Icon.Ionicons
@@ -179,7 +180,7 @@ class SectionListItem extends React.Component {
 							/>
 							<Text style={{
 								color: '#122EFF',
-								fontSize: 16,
+								fontSize: 18,
 							}}>
 								Back
 							</Text>
@@ -343,6 +344,7 @@ const styles = StyleSheet.create({
 	pdf: {
         flex:1,
         width:Dimensions.get('window').width,
+		paddingTop:500,
     },
 	developmentModeText: {
 		marginBottom: 20,
