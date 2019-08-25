@@ -4,11 +4,13 @@ import {
 	Dimensions,
 	Image,
 	ListView,
+	Modal,
 	Platform,
 	ScrollView,
 	SectionList,
 	StyleSheet,
 	Text,
+	TouchableHighlight,
 	TouchableOpacity,
 	View,
 } from 'react-native';
@@ -53,7 +55,7 @@ var storageRef = storage.ref();
 
 var articleList = [];
 var currentMag = storageRef.child('issue 6 2.pdf');
-var source = {uri:'https://s2.q4cdn.com/235752014/files/doc_downloads/test.pdf',cache:true};
+var source = {uri:'http://http://www.orimi.com/pdf-test.pdf',cache:true};
 
 class PDF extends React.Component {
 	constructor(props) {
@@ -117,9 +119,6 @@ class PDF extends React.Component {
 			</View>
 			//const source = require('https://firebasestorage.googleapis.com/v0/b/bulletin-magazine.appspot.com/o/issue%206%202.pdf?alt=media&token=e9e915db-1a70-47a2-ba56-63ae8404d606');  // ios only
 			//const source = {uri:'bundle-assets://https://firebasestorage.googleapis.com/v0/b/bulletin-magazine.appspot.com/o/issue%206%202.pdf?alt=media&token=e9e915db-1a70-47a2-ba56-63ae8404d606'};
-
-			//const source = {uri:'file:///sdcard/test.pdf'};
-			//const source = {uri:"data:application/pdf;base64,..."};
 		);
 	}	
 }
@@ -127,10 +126,17 @@ class PDF extends React.Component {
 class SectionListItem extends React.Component {
 	constructor(props) {
 		super(props);
-		this.state = {openArticle: false};
+		this.state = {
+			modalVisible: false,
+			openArticle: false
+		};
 		this.getValue = this.getValue.bind(this);
     }
 
+	setModalVisible(visible) {
+		this.setState({modalVisible: visible});
+	}
+	
     getValue() {
         return this.state.openArticle;
     }
@@ -141,6 +147,7 @@ class SectionListItem extends React.Component {
 		this.setState(previousState => (
 			{openArticle: !previousState.openArticle}
 		));
+		this.setModalVisible(true);
 	}
 	
 	_goBack = () => {
@@ -157,7 +164,7 @@ class SectionListItem extends React.Component {
 			return(
 				<View style={{
 					position: 'relative',
-					flex: 0
+					flex: 1
 				}}>
 					<Touchable
 						style={styles.option}
@@ -186,7 +193,30 @@ class SectionListItem extends React.Component {
 							</Text>
 						</View>
 					</Touchable>
-					<PDF/>
+					
+					<Modal
+					animationType="slide"
+					transparent={false}
+					visible={this.state.modalVisible}
+					onRequestClose={() => {
+						Alert.alert('Modal has been closed.');
+					}}>
+						<View style={{marginTop: 22}}>
+							<View>
+								<View style={{
+									flex: 1
+								}}>
+									<PDF/>
+								</View>
+								<TouchableHighlight
+									onPress={() => {
+									this.setModalVisible(!this.state.modalVisible);
+								}}>
+									<Text>Hide Modal</Text>
+								</TouchableHighlight>
+							</View>
+						</View>
+					</Modal>
 				</View>
 			);
 		}
@@ -258,7 +288,10 @@ class SectionHeader extends React.Component {
 class ArticleList extends React.Component {
 	constructor(props) {
 		super(props);
-		this.state = {articleListAquired: false};
+		this.state = {
+			articleListAquired: false,
+			modalVisible: false
+		};
 		
 		var allArticles;
 		var allArticlesRef = firebase.database().ref('articles').once('value').then(function(snapshot) {
@@ -318,6 +351,17 @@ export default class HomeScreen extends React.Component {
 		header: null,
 	};
 	
+	constructor(props) {
+		super(props);
+		this.state = {
+			modalVisible: false
+		};
+    }
+
+	setModalVisible(visible) {
+		this.setState({modalVisible: visible});
+	}
+	
 	render() {
 		/*if (!this.state.articleListAquired) {
 			return (
@@ -326,6 +370,32 @@ export default class HomeScreen extends React.Component {
 				</View>
 			);
 		}*/
+		
+		if (true) {
+			<Modal
+			animationType="slide"
+			transparent={false}
+			visible={this.state.modalVisible}
+			onRequestClose={() => {
+				Alert.alert('Modal has been closed.');
+			}}>
+				<View style={{marginTop: 22}}>
+					<View>
+						<View style={{
+							flex: 1
+						}}>
+							<PDF/>
+						</View>
+						<TouchableHighlight
+							onPress={() => {
+							this.setModalVisible(!this.state.modalVisible);
+						}}>
+							<Text>Hide Modal</Text>
+						</TouchableHighlight>
+					</View>
+				</View>
+			</Modal>
+		}
 		
         return (
             <View style={styles.container}>
