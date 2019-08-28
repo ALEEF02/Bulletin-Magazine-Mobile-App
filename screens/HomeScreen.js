@@ -13,6 +13,7 @@ import {
 	TouchableHighlight,
 	TouchableOpacity,
 	View,
+	WebView
 } from 'react-native';
 
 import {
@@ -55,72 +56,23 @@ var storageRef = storage.ref();
 
 var articleList = [];
 var currentMag = storageRef.child('issue 6 2.pdf');
-var source = {uri:'http://http://www.orimi.com/pdf-test.pdf',cache:true};
+var source = { uri: 'https://www.orimi.com/pdf-test.pdf' };
 
 class PDF extends React.Component {
 	constructor(props) {
 		super(props);
-		this.state = {PDF: false};
-
+		this.state = { uri: ""};
 		console.log('Current Mag: ' + currentMag);
-		
-		currentMag.getDownloadURL().then(function(url) {
-			var xhr = new XMLHttpRequest();
-			xhr.responseType = 'blob';
-			xhr.onload = function(event) {
-				var blob = xhr.response;
-				console.log('blob from xhr: ' + JSON.stringify(blob));
-				var reader = new FileReader();
-				reader.onload = function() {
-					source.uri = reader.result;
-					this.setState(previousState => (
-						{PDF: !previousState.PDF}
-					))
-				}.bind(this);
-				reader.readAsDataURL(blob);
-			}.bind(this);
-			xhr.open('GET', url);
-			xhr.send();
-			
-			
-		}.bind(this)).catch(function(error) {
-			return (
-				<View style={styles.container}>
-					<Text>Error: {error}</Text>
-				</View>
-			);
-		});
+		currentMag.getDownloadURL().then((uri)=>this.setState({uri}));
 	}
-	
-	render() {
-		if (!this.state.PDF) {
-			console.log('Waiting for ' + currentMag + ' to download');
-			return (
-				<View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
-					<Text>Loading Articles...</Text>
-				</View>
-			);
-		}
-		
+
+    render() {
 		return (
 			<View style={styles.container}>
-				<PDFReader
-					source={source}
-					onLoadComplete={(numberOfPages,filePath)=>{
-						console.log('Number of pages: ${numberOfPages}');
-					}}
-					onPageChanged={(page,numberOfPages)=>{
-						console.log('Current page: ${page}');
-					}}
-					onError={(error)=>{
-						console.log('Error in rendering article: ' + error);
-					}}
-					style={styles.pdf}/>
+				 { this.state.uri != "" ? <PDFReader style={{flex:1}} source={{ uri:this.state.uri }} /> : <Text>Loading...</Text> }
 			</View>
-			//const source = require('https://firebasestorage.googleapis.com/v0/b/bulletin-magazine.appspot.com/o/issue%206%202.pdf?alt=media&token=e9e915db-1a70-47a2-ba56-63ae8404d606');  // ios only
-			//const source = {uri:'bundle-assets://https://firebasestorage.googleapis.com/v0/b/bulletin-magazine.appspot.com/o/issue%206%202.pdf?alt=media&token=e9e915db-1a70-47a2-ba56-63ae8404d606'};
 		);
-	}	
+	}
 }
 
 class SectionListItem extends React.Component {
@@ -131,21 +83,25 @@ class SectionListItem extends React.Component {
 			openArticle: false
 		};
 		this.getValue = this.getValue.bind(this);
-    }
+	}
 
 	setModalVisible(visible) {
-		this.setState({modalVisible: visible});
+		this.setState({ modalVisible: visible });
 	}
-	
-    getValue() {
-        return this.state.openArticle;
-    }
-	
+
+	getValue() {
+		return this.state.openArticle;
+	}
+
+	resetModal() {
+		this.setState({ openArticle: false });
+	}
+
 	_openArticle = (articleName) => {
 		console.log('Clicked ' + articleName);
 		currentMag = storageRef.child(articleName);
 		this.setState(previousState => (
-			{openArticle: !previousState.openArticle}
+			{ openArticle: !previousState.openArticle }
 		));
 		this.setModalVisible(true);
 	}
@@ -153,74 +109,82 @@ class SectionListItem extends React.Component {
 	_goBack = () => {
 		return (
 			<View style={styles.container}>
-				<ArticleList/>
+				<ArticleList />
 			</View>
 		);
 	}
-	
+
 	render() {
 		if (this.state.openArticle) {
 			console.log('Beginning main article render');
-			return(
+			return (
+				
 				<View style={{
 					position: 'relative',
 					flex: 1
 				}}>
+
 					<Touchable
 						style={styles.option}
 						background={Touchable.Ripple('#ccc', false)}
-						onPress={() => this._goBack()}>
+						onPress={() => this._openArticle(this.props.item.fileName)}>
 						<View style={{
 							flex: 1,
-							flexDirection: 'row',
+							flexDirection: 'column',
 							backgroundColor: '#FFFFFF'
 						}}>
-							<Icon.Ionicons
-								name={
-								Platform.OS === 'ios'? 
-									`ios-arrow-back`
-									: 'md-arrow-back'
-								}
-								size={26}
-								style={{ marginBottom: -3 }}
-								color={Colors.tabIconDefault}
-							/>
 							<Text style={{
-								color: '#122EFF',
-								fontSize: 18,
+								fontSize: 16,
+								fontWeight: 'bold',
+								color: '#000000',
+								marginLeft: 15,
+								marginRight: 10,
 							}}>
-								Back
+								{this.props.item.title}
 							</Text>
+							<Text style={{
+								fontSize: 16,
+								color: '#000000',
+								marginLeft: 20,
+								marginRight: 10,
+							}}>
+								{this.props.item.date}
+							</Text>
+							<View style={{
+								backgroundColor: '#CCCCCC',
+								height: 1,
+								margin: 6,
+								marginLeft: 15,
+								marginRight: 10
+							}}>
+							</View>
 						</View>
 					</Touchable>
-					
+
 					<Modal
-					animationType="slide"
-					transparent={false}
-					visible={this.state.modalVisible}
-					onRequestClose={() => {
-						Alert.alert('Modal has been closed.');
-					}}>
-						<View style={{marginTop: 22}}>
-							<View>
-								<View style={{
-									flex: 1
-								}}>
-									<PDF/>
-								</View>
+						animationType="slide"
+						transparent={false}
+						visible={this.state.modalVisible}
+						onRequestClose={this.resetModal}>
+						<View style={{ marginTop: 22, flex: 1}}>
+							<View style={{ flex: 1}}>
 								<TouchableHighlight
 									onPress={() => {
-									this.setModalVisible(!this.state.modalVisible);
-								}}>
-									<Text>Hide Modal</Text>
+										this.setModalVisible(!this.state.modalVisible);
+										this.resetModal();
+									}}>
+									<Text style={{textAlign: "center", fontSize: 20, marginBottom: 10,}}>Close Article</Text>
 								</TouchableHighlight>
+								<View style={{ flex: 1}}>
+									<PDF />
+								</View>
 							</View>
 						</View>
 					</Modal>
 				</View>
 			);
 		}
-		
+
 		return (
 			<View>
 				<Touchable
@@ -255,7 +219,7 @@ class SectionListItem extends React.Component {
 							margin: 6,
 							marginLeft: 15,
 							marginRight: 10
-						}}>				
+						}}>
 						</View>
 					</View>
 				</Touchable>
@@ -292,12 +256,12 @@ class ArticleList extends React.Component {
 			articleListAquired: false,
 			modalVisible: false
 		};
-		
+
 		var allArticles;
-		var allArticlesRef = firebase.database().ref('articles').once('value').then(function(snapshot) {
+		var allArticlesRef = firebase.database().ref('articles').once('value').then(function (snapshot) {
 			allArticles = snapshot.val();
 			console.log('All articles: ' + JSON.stringify(allArticles));
-			var tempArticleObj = {data:[], title: 'Articles'};
+			var tempArticleObj = { data: [], title: 'Articles' };
 			Object.keys(allArticles).forEach(function (item) {
 				tempArticleObj['data'].push({
 					title: allArticles[item].title,
@@ -307,33 +271,33 @@ class ArticleList extends React.Component {
 			});
 			articleList.push(tempArticleObj);
 			this.setState(previousState => (
-				{articleListAquired: !previousState.articleListAquired}
+				{ articleListAquired: !previousState.articleListAquired }
 			))
 		}.bind(this));
 	}
-	
+
 	render() {
 		if (!this.state.articleListAquired) {
 			return (
-				<View style={{flex: 1, justifyContent: "center", alignItems: "center"}}>
-					<Text>Loading Article...</Text>
+				<View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+					<Text>Loading Articles...</Text>
 				</View>
 			);
 		}
-		
+
 		return (
 			<View style={styles.container}>
 				<SectionList
-					renderItem={({item, index}) => {
+					renderItem={({ item, index }) => {
 						return (
 							<SectionListItem
 								item={item}
-								index={index}/>
+								index={index} />
 						);
 					}}
-					renderSectionHeader={({section}) => {
+					renderSectionHeader={({ section }) => {
 						return (
-							<SectionHeader section={section}/>
+							<SectionHeader section={section} />
 						);
 					}}
 					sections={articleList}
@@ -350,58 +314,24 @@ export default class HomeScreen extends React.Component {
 		title: 'Articles',
 		header: null,
 	};
-	
+
 	constructor(props) {
 		super(props);
 		this.state = {
 			modalVisible: false
 		};
-    }
+	}
 
 	setModalVisible(visible) {
-		this.setState({modalVisible: visible});
+		this.setState({ modalVisible: visible });
 	}
-	
+
 	render() {
-		/*if (!this.state.articleListAquired) {
-			return (
-				<View style={styles.container}>
-					<Text>Loading Articles...</Text>
-				</View>
-			);
-		}*/
-		
-		if (true) {
-			<Modal
-			animationType="slide"
-			transparent={false}
-			visible={this.state.modalVisible}
-			onRequestClose={() => {
-				Alert.alert('Modal has been closed.');
-			}}>
-				<View style={{marginTop: 22}}>
-					<View>
-						<View style={{
-							flex: 1
-						}}>
-							<PDF/>
-						</View>
-						<TouchableHighlight
-							onPress={() => {
-							this.setModalVisible(!this.state.modalVisible);
-						}}>
-							<Text>Hide Modal</Text>
-						</TouchableHighlight>
-					</View>
-				</View>
-			</Modal>
-		}
-		
-        return (
-            <View style={styles.container}>
-				<ArticleList/>
-            </View>
-        );
+		return (
+			<View style={styles.container}>
+				<ArticleList />
+			</View>
+		);
 	}
 }
 
@@ -412,10 +342,10 @@ const styles = StyleSheet.create({
 		backgroundColor: '#fff',
 	},
 	pdf: {
-        flex:1,
-        width:Dimensions.get('window').width,
-		paddingTop:500,
-    },
+		flex: 1,
+		width: Dimensions.get('window').width,
+		paddingTop: 500,
+	},
 	developmentModeText: {
 		marginBottom: 20,
 		color: 'rgba(0,0,0,0.4)',
