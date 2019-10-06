@@ -165,7 +165,7 @@ class SectionListItem extends React.Component {
 						animationType="slide"
 						transparent={false}
 						visible={this.state.modalVisible}
-						onRequestClose={this.resetModal}>
+						onRequestClose={this.resetModal.bind(this)}>
 						<View style={{ marginTop: 22, flex: 1}}>
 							<View style={{ flex: 1}}>
 								<TouchableHighlight
