@@ -16,18 +16,19 @@ import {
 	WebView
 } from 'react-native';
 
-import {
-	WebBrowser,
-	Constants,
-	Icon,
-} from 'expo';
+import { Asset } from 'expo-asset';
+import Constants from 'expo-constants';
+import * as FileSystem from 'expo-file-system';
+import * as WebBrowser from 'expo-web-browser';
+import * as Font from 'expo-font';
+import * as Icon from '@expo/vector-icons';
 
 import {
 	MonoText
 } from '../components/StyledText';
 
 import firebase from "firebase";
-import PDFReader from 'rn-pdf-reader-js';
+import PDFReader from '../rn-pdf-reader-js/index';
 import TabBarIcon from '../components/TabBarIcon';
 import Colors from '../constants/Colors';
 
@@ -165,7 +166,7 @@ class SectionListItem extends React.Component {
 						animationType="slide"
 						transparent={false}
 						visible={this.state.modalVisible}
-						onRequestClose={this.resetModal}>
+						onRequestClose={this.resetModal.bind(this)}>
 						<View style={{ marginTop: 22, flex: 1}}>
 							<View style={{ flex: 1}}>
 								<TouchableHighlight

@@ -1,0 +1,38 @@
+{
+  "name": "rn-pdf-reader-js",
+  "version": "0.2.3",
+  "description": "PDF reader for Expo",
+  "main": "index.js",
+  "author": "Xavier Carpentier <xcapetir@gmail.com> (https://xaviercarpentier.com/)",
+  "license": "MIT",
+  "scripts": {
+    "bundle": "./scripts/gen_bundle_string.js"
+  },
+  "keywords": [
+    "React-Native",
+    "PDF",
+    "pdfjs",
+    "reader",
+    "pdf-reader",
+    "pdf-viewer",
+    "react-pdf",
+    "expo"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/xcarpentier/rn-pdf-reader-js.git"
+  },
+  "peerDependencies": {
+    "expo": "*",
+    "react": "*",
+    "react-native": "*"
+  },
+  "dependencies": {
+    "buffer": "5.1.0",
+    "js-base64": "2.4.5"
+  },
+  "devDependencies": {
+    "crypto": "1.0.1",
+    "flow-bin": "0.73.0"
+  }
+}
