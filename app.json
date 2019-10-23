@@ -10,6 +10,7 @@
     ],
     "version": "1.0.0",
     "orientation": "portrait",
+    "primaryColor": "#0000FF",
     "icon": "./assets/images/icon.png",
     "splash": {
       "image": "./assets/images/splash.png",
@@ -24,10 +25,12 @@
     ],
     "ios": {
       "supportsTablet": true,
+      "buildNumber": "1.0.0",
       "bundleIdentifier": "com.eltorohs.bulletin"
     },
     "android": {
-      "package": "com.eltorohs.bulletin"
+      "package": "com.eltorohs.bulletin",
+      "versionCode": 1
     },
     "description": "The BullETin Magazine",
     "githubUrl": "https://github.com/ALEEF02/Bulletin-Magazine-Mobile-App"

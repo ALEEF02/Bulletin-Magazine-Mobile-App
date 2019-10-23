@@ -179,7 +179,6 @@ class PdfReader extends Component<Props, State> {
     const { style } = this.props
 
     if (data && ios) {
-	  console.log(data + ' hi');
       return (
         <View style={[styles.container, style]}>
           {!ready && <Loader />}

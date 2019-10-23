@@ -342,6 +342,10 @@ const styles = StyleSheet.create({
 		flex: 1,
 		backgroundColor: '#fff',
 	},
+	safeArea: {
+		flex: 1,
+		backgroundColor: '#ddd'
+	},
 	pdf: {
 		flex: 1,
 		width: Dimensions.get('window').width,
