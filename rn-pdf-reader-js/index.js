@@ -193,6 +193,7 @@ class PdfReader extends Component<Props, State> {
     }
 
     if (ready && data && android) {
+	  console.log("Rendering Android...");
       return (
         <View style={[styles.container, style]}>
           <WebView
