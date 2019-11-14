@@ -98,11 +98,13 @@ const Loader = () => (
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+	opacity: 0.99,
     paddingTop: Constants.statusBarHeight,
     backgroundColor: '#ecf0f1',
   },
   webview: {
     flex: 1,
+	opacity: 0.99,
     backgroundColor: 'rgb(82, 86, 89)',
   },
 })
@@ -134,6 +136,7 @@ class PdfReader extends Component<Props, State> {
       this.setState({ ios, android })
       let ready = false
       let data = undefined
+	  console.log("URI: " + source.uri);
       if (
         source.uri &&
         android &&
@@ -193,16 +196,22 @@ class PdfReader extends Component<Props, State> {
     }
 
     if (ready && data && android) {
-	  console.log("Rendering Android...");
+	  console.log("Rendering Android... " + htmlPath);
       return (
         <View style={[styles.container, style]}>
           <WebView
-            allowFileAccess
+			onLoadEnd={()=>console.log("Load ended")}
+			onLoadStart={()=>console.log("Load started")}
+			onError={(error)=>console.log("Error: " + error)}
+			originWhitelist={['*']}
+			allowFileAccess={true}
+            allowFileAccessFromFileURLs={true}
+			allowUniversalAccessFromFileURLs={true}
+			domStorageEnabled={true}
             style={styles.webview}
-            source={{ uri: htmlPath }}
+			androidHardwareAccelerationDisabled={true}
+            source={{uri: htmlPath}}
             mixedContentMode="always"
-            scrollEnabled
-            height="100vh"
           />
         </View>
       )

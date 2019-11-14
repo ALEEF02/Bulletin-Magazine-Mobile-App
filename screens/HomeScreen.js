@@ -33,8 +33,7 @@ import PDFReader from '../rn-pdf-reader-js/index';
 import TabBarIcon from '../components/TabBarIcon';
 import Colors from '../constants/Colors';
 
-
-
+//Fix firebase errors on Android with setTimeout
 const _setTimeout = global.setTimeout;
 const _clearTimeout = global.clearTimeout;
 const MAX_TIMER_DURATION_MS = 60 * 1000;
@@ -74,19 +73,7 @@ if (Platform.OS === 'android') {
   };
 }
 
-
-
-
-/*import {
-	articleList,
-	storageRef,
-	allArticlesRef,
-	addArticlesToList,
-} from '../data/GetArticles';
-*/
-
 // Initialize Firebase
-
 var config = {
 	apiKey: "AIzaSyAvFJ1VI_UNcHd2KJavI4on7PuQUTb1fCU",
 	authDomain: "bulletin-magazine.firebaseapp.com",
@@ -111,8 +98,9 @@ class PDF extends React.Component {
 		console.log('Current Mag: ' + currentMag);
 		currentMag.getDownloadURL().then((uri)=>this.setState({uri}));
 	}
-
+	
     render() {
+		console.log("URI: " + this.state.uri);
 		return (
 			<View style={styles.container}>
 				 { this.state.uri != "" ? <PDFReader style={{flex:1}} source={{ uri:this.state.uri }} /> : <Text>Loading...</Text> }
