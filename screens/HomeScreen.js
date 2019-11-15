@@ -1,3 +1,4 @@
+//Import Modules
 import React from 'react';
 import Touchable from 'react-native-platform-touchable';
 import {
@@ -33,7 +34,7 @@ import PDFReader from '../rn-pdf-reader-js/index';
 import TabBarIcon from '../components/TabBarIcon';
 import Colors from '../constants/Colors';
 
-//Fix firebase errors on Android with setTimeout
+//Fix issue on Android with Firebase and setTimeout
 const _setTimeout = global.setTimeout;
 const _clearTimeout = global.clearTimeout;
 const MAX_TIMER_DURATION_MS = 60 * 1000;
@@ -73,7 +74,7 @@ if (Platform.OS === 'android') {
   };
 }
 
-// Initialize Firebase
+//Initialize Firebase
 var config = {
 	apiKey: "AIzaSyAvFJ1VI_UNcHd2KJavI4on7PuQUTb1fCU",
 	authDomain: "bulletin-magazine.firebaseapp.com",
@@ -91,11 +92,13 @@ var articleList = [];
 var currentMag = storageRef.child('issue 6 2.pdf');
 var source = { uri: 'https://www.orimi.com/pdf-test.pdf' };
 
+//PDF Render Class
 class PDF extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = { uri: ""};
 		console.log('Current Mag: ' + currentMag);
+		//Download the touched magazine
 		currentMag.getDownloadURL().then((uri)=>this.setState({uri}));
 	}
 	
@@ -109,6 +112,7 @@ class PDF extends React.Component {
 	}
 }
 
+//Article Selection Creator
 class SectionListItem extends React.Component {
 	constructor(props) {
 		super(props);
@@ -130,10 +134,12 @@ class SectionListItem extends React.Component {
 	resetModal() {
 		this.setState({ openArticle: false });
 	}
-
+	
+	//When an article is clicked
 	_openArticle = (articleName) => {
 		console.log('Clicked ' + articleName);
 		currentMag = storageRef.child(articleName);
+		//Set the currentMag to the corresponding article
 		this.setState(previousState => (
 			{ openArticle: !previousState.openArticle }
 		));
@@ -200,6 +206,7 @@ class SectionListItem extends React.Component {
 						transparent={false}
 						visible={this.state.modalVisible}
 						onRequestClose={this.resetModal.bind(this)}>
+						hardwareAccelerated={false}
 						<View style={{ marginTop: 22, flex: 1}}>
 							<View style={{ flex: 1}}>
 								<TouchableHighlight
@@ -283,6 +290,7 @@ class SectionHeader extends React.Component {
 	}
 }
 
+//Article List Creator
 class ArticleList extends React.Component {
 	constructor(props) {
 		super(props);
@@ -292,10 +300,12 @@ class ArticleList extends React.Component {
 		};
 
 		var allArticles;
+		//Download all articles from the Firebase database
 		var allArticlesRef = firebase.database().ref('articles').once('value').then(function (snapshot) {
 			allArticles = snapshot.val();
 			console.log('All articles: ' + JSON.stringify(allArticles));
 			var tempArticleObj = { data: [], title: 'Articles' };
+			//Format downloaded articles
 			Object.keys(allArticles).forEach(function (item) {
 				tempArticleObj['data'].push({
 					title: allArticles[item].title,
@@ -304,6 +314,7 @@ class ArticleList extends React.Component {
 				});
 			});
 			articleList.push(tempArticleObj);
+			//Indicate to the app that the articles have been successfully downloaded and are ready for display
 			this.setState(previousState => (
 				{ articleListAquired: !previousState.articleListAquired }
 			))
@@ -343,6 +354,7 @@ class ArticleList extends React.Component {
 	}
 }
 
+//Main Render
 export default class HomeScreen extends React.Component {
 	static navigationOptions = {
 		title: 'Articles',

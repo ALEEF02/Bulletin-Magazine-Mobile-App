@@ -7,6 +7,7 @@ import HomeScreen from '../screens/HomeScreen';
 import LinksScreen from '../screens/LinksScreen';
 import SettingsScreen from '../screens/SettingsScreen';
 
+//Create bottom navigation
 const HomeStack = createStackNavigator({
   Home: HomeScreen,
 });
@@ -53,8 +54,9 @@ SettingsStack.navigationOptions = {
   ),
 };
 
+//Only display the home page, for now
 export default createBottomTabNavigator({
   HomeStack,
-  LinksStack,
+  //LinksStack,
   //SettingsStack,
 });

@@ -98,9 +98,9 @@ const Loader = () => (
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-	opacity: 0.99,
     paddingTop: Constants.statusBarHeight,
     backgroundColor: '#ecf0f1',
+	overflow: hidden,
   },
   webview: {
     flex: 1,
