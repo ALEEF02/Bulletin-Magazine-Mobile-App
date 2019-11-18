@@ -161,6 +161,7 @@ class PdfReader extends Component<Props, State> {
     } catch (error) {
       alert('Sorry, an error occurred.')
       console.error(error)
+	  console.log("Error: " + error)
     }
   }
 
@@ -193,16 +194,19 @@ class PdfReader extends Component<Props, State> {
     }
 
     if (ready && data && android) {
-	  console.log("Rendering Android...");
+	  console.log("Rendering Android...\n" + htmlPath + "\n" + JSON.stringify(styles.container));
       return (
         <View style={[styles.container, style]}>
           <WebView
-            allowFileAccess
+            allowFileAccess={true}
+			allowFileAccessFromFileURLs={true}
+			allowUniversalAccessFromFileURLs={true}
+			domStorageEnabled={true}
+			androidHardwareAccelerationDisabled={true}
             style={styles.webview}
             source={{ uri: htmlPath }}
+			originWhitelist={["*"]}
             mixedContentMode="always"
-            scrollEnabled
-            height="100vh"
           />
         </View>
       )
