@@ -49,7 +49,7 @@
 		  "com.sec.android.provider.badge.permission.READ",
 		  "com.sec.android.provider.badge.permission.WRITE",
 		  "com.sonyericsson.home.permission.BROADCAST_BADGE"
-		],
+		]
     },
     "description": "The BullETin Magazine",
     "githubUrl": "https://github.com/ALEEF02/Bulletin-Magazine-Mobile-App"
