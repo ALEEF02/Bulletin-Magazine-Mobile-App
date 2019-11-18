@@ -7,7 +7,7 @@ Made for ETHS by Anthony Ford (ALEEF02)
 > Ensure that you check the box to 'add python.exe to Path'
 3. Install Expo with the command `npm install -g expo-cli`
 4. Install the remaining node modules with `npm install`
-5. Run with 'npm start'
+5. Run with `npm start`
 
 ## To upload a new article:
 1) Go to https://console.firebase.google.com/u/0/project/bulletin-magazine/storage/bulletin-magazine.appspot.com/files using the school account.
