@@ -123,7 +123,7 @@ type State = {
 }
 
 class PdfReader extends Component<Props, State> {
-  state = { ready: false, android: false, ios: false, data: undefined }
+  state = { ready: false, android: false, ios: false, data: undefined, renderedOnce: false }
 
   async init() {
     try {
@@ -158,6 +158,7 @@ class PdfReader extends Component<Props, State> {
       }
 
       this.setState({ ready, data })
+	  this.setState({ renderedOnce: true })
     } catch (error) {
       alert('Sorry, an error occurred.')
       console.error(error)
@@ -176,7 +177,7 @@ class PdfReader extends Component<Props, State> {
   }
 
   render() {
-    const { ready, data, ios, android } = this.state
+    const { ready, data, ios, android, renderedOnce } = this.state
     const { style } = this.props
 
     if (data && ios) {
@@ -194,17 +195,18 @@ class PdfReader extends Component<Props, State> {
     }
 
     if (ready && data && android) {
-	  console.log("Rendering Android...\n" + htmlPath + "\n" + JSON.stringify(styles.container));
+	  console.log("Rendering Android...\n" + htmlPath + "\n" + JSON.stringify(styles.container) + "\nRendered Once: " + renderedOnce);
       return (
         <View style={[styles.container, style]}>
           <WebView
             allowFileAccess={true}
+			allowContentAccess={true}
 			allowFileAccessFromFileURLs={true}
 			allowUniversalAccessFromFileURLs={true}
 			domStorageEnabled={true}
 			androidHardwareAccelerationDisabled={true}
             style={styles.webview}
-            source={{ uri: htmlPath }}
+            source={renderedOnce ? { uri: htmlPath } : undefined}
 			originWhitelist={["*"]}
             mixedContentMode="always"
           />
