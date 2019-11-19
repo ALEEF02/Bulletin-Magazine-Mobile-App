@@ -317,7 +317,7 @@ class ArticleList extends React.Component {
 				comparison = -1;
 			}
 			return comparison;
-		}			
+		}
 
 		var allArticles;
 		//Download all articles from the Firebase database
@@ -325,6 +325,7 @@ class ArticleList extends React.Component {
 			allArticles = snapshot.val();
 			console.log('All articles: ' + JSON.stringify(allArticles));
 			allArticles.sort(compare);
+			allArticles.reverse();
 			console.log('All articles sorted: ' + JSON.stringify(allArticles));
 			var tempArticleObj = { data: [], title: 'Articles' };
 			//Format downloaded articles
