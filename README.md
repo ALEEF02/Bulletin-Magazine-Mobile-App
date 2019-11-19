@@ -22,5 +22,5 @@ Made for ETHS by Anthony Ford (ALEEF02)
 ![Add 4 fields](/readme/add3.PNG)
 8) Fill the boxes as shown below
 ![Fill in the article details](/readme/add4.png)
-9) Click the blue "Add" button
+9) Click the blue "Add" button  
 **Your article is now uploaded!**

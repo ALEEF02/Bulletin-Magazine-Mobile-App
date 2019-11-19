@@ -8,6 +8,7 @@ import {
 	ListView,
 	Modal,
 	Platform,
+	SafeAreaView,
 	ScrollView,
 	SectionList,
 	StyleSheet,
@@ -176,6 +177,7 @@ class SectionListItem extends React.Component {
 								fontSize: 16,
 								fontWeight: 'bold',
 								color: '#000000',
+								marginTop: 8,
 								marginLeft: 15,
 								marginRight: 10,
 							}}>
@@ -235,6 +237,14 @@ class SectionListItem extends React.Component {
 						flexDirection: 'column',
 						backgroundColor: '#FFFFFF'
 					}}>
+						<View style={{
+							backgroundColor: '#CCCCCC',
+							height: 1,
+							margin: 6,
+							marginLeft: 15,
+							marginRight: 10
+						}}>
+						</View>
 						<Text style={{
 							fontSize: 16,
 							fontWeight: 'bold',
@@ -278,9 +288,9 @@ class SectionHeader extends React.Component {
 					fontSize: 16,
 					fontWeight: 'bold',
 					color: 'white',
-					marginTop: 30,
+					marginTop: 20,
 					marginLeft: 20,
-					marginBottom: 15
+					marginBottom: 20
 				}}>{this.props.section.title}
 				</Text>
 			</View>
@@ -297,11 +307,25 @@ class ArticleList extends React.Component {
 			modalVisible: false
 		};
 
+		function compare(a, b) {
+			const dateA = a.date;
+			const dateB = b.date;
+			var comparison = 0;
+			if (dateA > dateB) {
+				comparison = 1;
+			} else if (dateA < dateB) {
+				comparison = -1;
+			}
+			return comparison;
+		}			
+
 		var allArticles;
 		//Download all articles from the Firebase database
 		var allArticlesRef = firebase.database().ref('articles').once('value').then(function (snapshot) {
 			allArticles = snapshot.val();
 			console.log('All articles: ' + JSON.stringify(allArticles));
+			allArticles.sort(compare);
+			console.log('All articles sorted: ' + JSON.stringify(allArticles));
 			var tempArticleObj = { data: [], title: 'Articles' };
 			//Format downloaded articles
 			Object.keys(allArticles).forEach(function (item) {
@@ -372,9 +396,11 @@ export default class HomeScreen extends React.Component {
 
 	render() {
 		return (
-			<View style={styles.container}>
-				<ArticleList />
-			</View>
+			<SafeAreaView style={styles.container}>
+				<View style={styles.container}>
+					<ArticleList />
+				</View>
+			</SafeAreaView>
 		);
 	}
 }
