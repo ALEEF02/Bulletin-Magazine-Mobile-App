@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "784960134498",
+    "firebase_url": "https://bulletin-mag.firebaseio.com",
+    "project_id": "bulletin-mag",
+    "storage_bucket": "bulletin-mag.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:784960134498:android:41fba46cd4b3722650603b",
+        "android_client_info": {
+          "package_name": "com.eltorohs.bulletin"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "784960134498-h0gu3ditej0fokq50lgiri1ds6nqiamu.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCOmDWPDkFVX4w7zIV3yP6qoqEPFWi8EWA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "784960134498-h0gu3ditej0fokq50lgiri1ds6nqiamu.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
