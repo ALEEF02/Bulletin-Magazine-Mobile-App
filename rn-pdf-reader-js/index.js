@@ -1,6 +1,7 @@
 // @flow
 import React, { Component } from 'react'
 import {
+  AsyncStorage,
   View,
   ActivityIndicator,
   Platform,
@@ -56,6 +57,12 @@ function readAsTextAsync(mediaBlob: Blob): Promise<string> {
       const reader = new FileReader()
       reader.onloadend = e => {
         if (typeof reader.result === 'string') {
+		  try {
+			//TODO: Store results
+			await AsyncStorage.setItem('@MySuperStore:key', 'I like to save it.');
+		  } catch (error) {
+			// Error saving data
+		  }
           return resolve(reader.result)
         }
         return reject(
