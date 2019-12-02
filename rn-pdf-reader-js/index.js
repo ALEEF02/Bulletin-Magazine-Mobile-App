@@ -51,7 +51,7 @@ export async function removeFilesAsync(): Promise<*> {
   await deleteAsync(htmlPath)
 }
 
-function readAsTextAsync(mediaBlob: Blob): Promise<string> {
+function readAsTextAsync(mediaBlob: Blob, magazineName: string): Promise<string> {
   return new Promise((resolve, reject) => {
     try {
       const reader = new FileReader()
@@ -59,12 +59,13 @@ function readAsTextAsync(mediaBlob: Blob): Promise<string> {
         if (typeof reader.result === 'string') {
 		  try {
 			//TODO: Store results
-			await AsyncStorage.setItem('@MySuperStore:key', 'I like to save it.');
+			console.log("Storing article '" + magazineName + "' - " + reader.result);
+			AsyncStorage.setItem(magazineName, reader.result).then(() => {});
 		  } catch (error) {
-			// Error saving data
+			console.log("Error saving article: " + error);
 		  }
-          return resolve(reader.result)
-        }
+		  return resolve(reader.result)
+		}
         return reject(
           `Unable to get result of file due to bad type, waiting string and getting ${typeof reader.result}.`,
         )
@@ -76,9 +77,9 @@ function readAsTextAsync(mediaBlob: Blob): Promise<string> {
   })
 }
 
-async function fetchPdfAsync(url: string): Promise<string> {
+async function fetchPdfAsync(url: string, currentMagName: string): Promise<string> {
   const mediaBlob = await urlToBlob(url)
-  return readAsTextAsync(mediaBlob)
+  return readAsTextAsync(mediaBlob, currentMagName)
 }
 
 async function urlToBlob(url) {
@@ -119,6 +120,7 @@ type Props = {
     uri?: string,
     base64?: string
   },
+  magName: string,
   style: object
 }
 
@@ -134,7 +136,7 @@ class PdfReader extends Component<Props, State> {
 
   async init() {
     try {
-      const { source } = this.props
+      const { source, magName } = this.props
       const ios = Platform.OS === 'ios'
       const android = Platform.OS === 'android'
 
@@ -148,13 +150,14 @@ class PdfReader extends Component<Props, State> {
           source.uri.startsWith('file') ||
           source.uri.startsWith('content'))
       ) {
-        data = await fetchPdfAsync(source.uri)
+        data = await fetchPdfAsync(source.uri, magName)
         ready= !!data
       } else if (source.base64 && source.base64.startsWith('data')) {
         data = source.base64
         ready = true
       } else if (ios) {
-        data = source.uri
+        data = await fetchPdfAsync(source.uri, magName)
+		ready= !!data
       } else {
         alert('source props is not correct')
         return
@@ -187,7 +190,7 @@ class PdfReader extends Component<Props, State> {
     const { ready, data, ios, android, renderedOnce } = this.state
     const { style } = this.props
 
-    if (data && ios) {
+    if (data && ios && ready) {
       return (
         <View style={[styles.container, style]}>
           {!ready && <Loader />}
