@@ -13,26 +13,27 @@
   "dependencies": {
     "@expo/samples": "2.1.1",
     "@expo/vector-icons": "^10.0.0",
-    "expo": "^34.0.0",
-    "expo-asset": "~6.0.0",
-    "expo-constants": "~6.0.0",
-    "expo-file-system": "~6.0.0",
-    "expo-font": "~6.0.1",
-    "expo-web-browser": "~6.0.0",
+    "expo": "^36.0.0",
+    "expo-asset": "^8.0.0",
+    "expo-constants": "^8.0.0",
+    "expo-file-system": "^8.0.0",
+    "expo-font": "^8.0.0",
+    "expo-web-browser": "^8.0.0",
     "firebase": "^5.11.1",
-    "react": "16.8.3",
-    "react-native": "https://github.com/expo/react-native/archive/sdk-34.0.2.tar.gz",
+    "react": "^16.9.0",
+    "react-native": "^0.61.5",
     "react-native-fetch-blob": "^0.10.8",
-    "react-native-gesture-handler": "~1.3.0",
+    "react-native-gesture-handler": "^1.5.2",
     "react-native-pdf": "^5.1.4",
-    "react-native-webview": "^5.12.1",
+    "react-native-web": "^0.11.7",
+    "react-native-webview": "^7.4.3",
     "react-navigation": "^3.0.9",
     "rn-fetch-blob": "^0.10.15",
     "rn-pdf-reader-js": "^0.2.1"
   },
   "devDependencies": {
     "babel-preset-expo": "^6.0.0",
-    "jest-expo": "^34.0.0"
+    "jest-expo": "^36.0.1"
   },
   "private": true
 }

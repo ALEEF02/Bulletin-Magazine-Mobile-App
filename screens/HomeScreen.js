@@ -96,6 +96,7 @@ var source = { uri: 'https://www.orimi.com/pdf-test.pdf' };
 
 //PDF Render Class
 class PDF extends React.Component {
+	
 	constructor(props) {
 		super(props);
 		this.state = { uri: "", base64: ""};
@@ -103,29 +104,29 @@ class PDF extends React.Component {
 		//Download the touched magazine
 			try {
 				console.log("Searching for '" + currentMag + "'");
-				AsyncStorage.getItem(currentMag).then((value) => {
+				AsyncStorage.getItem('@' + currentMag).then((value) => {
 					if (value !== null) {
 						console.log("Found magazine in local data");
-						(value)=>this.setState({base64});
+						this.setState({base64: value});
 					} else {
 						console.log("Did not find magazine in local data");
 						currentMag.getDownloadURL().then((uri)=>this.setState({uri}));
 					}
 				});
 			} catch (error) {
-				console.log("Error retrieving mag: " + error);
+				console.warn("Error retrieving mag: " + error);
 				currentMag.getDownloadURL().then((uri)=>this.setState({uri}));
 			}
 	}
 
     render() {
+		if (this.state.uri != "" || this.state.base64 != "") {
+			console.log("URI: '" + this.state.uri + "' Base64: '" + this.state.base64 + "' currentMag: " + currentMag);
+		}
 		return (
-			if (this.state.uri != "" || this.state.base64 != "") {
-				console.log("URI: '" + this.state.uri + "' Base64: '" + this.state.base64 + "'");
-			}
 			<View style={styles.container}>
 				{
-					this.state.uri != "" ? <PDFReader style={{flex:1}} source={{ uri:this.state.uri }} magName={{ currentMag }} /> : 
+					this.state.uri != "" ? <PDFReader style={{flex:1}} source={{ uri:this.state.uri }} magName={{ name:currentMag }} /> : 
 					this.state.base64 != "" ? <PDFReader style={{flex:1}} source={{ base64:this.state.base64 }} magName={{ currentMag }} /> : 
 					<Text>Loading...</Text>
 				}
