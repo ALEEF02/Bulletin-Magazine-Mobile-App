@@ -13,6 +13,7 @@ import Constants from 'expo-constants'
 
 const {
 	cacheDirectory,
+	documentDirectory,
 	writeAsStringAsync,
 	deleteAsync,
 	getInfoAsync,
@@ -36,19 +37,32 @@ function viewerHtml(base64: string): string {
 `
 }
 const bundleJsPath = `${cacheDirectory}bundle.js`
+const storagePath = `${documentDirectory}`
 const htmlPath = `${cacheDirectory}index.html`
 
-async function writeWebViewReaderFileAsync(data: string): Promise < * > {
+async function writeWebViewReaderFileAsync(data: string, magazineName: string): Promise < * > {
 	const { exist, md5 } = await getInfoAsync(bundleJsPath, { md5: true })
 	const bundleContainer = require('./bundleContainer')
 	if (!exist || bundleContainer.getBundleMd5() !== md5) {
 		await writeAsStringAsync(bundleJsPath, bundleContainer.getBundle())
 	}
 	await writeAsStringAsync(htmlPath, viewerHtml(data))
+	await storePermanent(data, magazineName)
 }
 
 export async function removeFilesAsync(): Promise < * > {
 	await deleteAsync(htmlPath)
+}
+
+export async function storePermanent(data:string, magazineName: string): Promise < * > {
+	console.log("Storing '" + magazineName + "' at " + storagePath);
+	await writeAsStringAsync(storagePath + magazineName + "/index.html", viewerHtml(data))
+}
+
+//FIX EXPORT
+export async function readPermanent(magazineName: string): Promise < * > {
+	console.log("Reading '" + magazineName + "' at " + storagePath);
+	await readAsStringAsync(storagePath + magazineName + "/index.html")
 }
 
 function readAsTextAsync(mediaBlob: Blob, magazineName: string): Promise < string > {
@@ -58,9 +72,10 @@ function readAsTextAsync(mediaBlob: Blob, magazineName: string): Promise < strin
 			reader.onloadend = e => {
 				if (typeof reader.result === 'string') {
 					try {
-						//TODO: Store results
 						console.log("Storing article '" + magazineName + "' - " + reader.result);
-						AsyncStorage.setItem(('@' + magazineName), reader.result).then(() => {});
+						storePermanent(reader.result, magazineName).then((value) => {
+							console.log("Stored " + value);
+						});
 					} catch (error) {
 						console.warn("Error saving article: " + error);
 					}
@@ -80,20 +95,8 @@ function readAsTextAsync(mediaBlob: Blob, magazineName: string): Promise < strin
 async function fetchPdfAsync(url: string, currentMagName: string, isAndroid: boolean): Promise < string > {
 	console.log('Getting blob for ' + url);
 	const mediaBlob = await urlToBlob(url);
-	if (isAndroid == true) {
-		console.log('Is an Android device, calling readAsTextAsync with ' + mediaBlob + ' and ' + currentMagName);
-		return readAsTextAsync(mediaBlob, currentMagName)
-	} else {
-		console.log("Is not an Android device, directly storing blob");
-		try {
-			console.log("Storing article " + currentMagName);
-			AsyncStorage.setItem(('@' + currentMagName), mediaBlob).then((error) => {
-				console.warn("Error saving article: " + error);
-			});
-		} catch (error) {
-			console.warn("Error saving article: " + error);
-		}
-	}
+	console.log('Calling readAsTextAsync with ' + mediaBlob + ' and ' + currentMagName);
+	return readAsTextAsync(mediaBlob, currentMagName)
 }
 
 async function urlToBlob(url) {
@@ -151,6 +154,7 @@ class PdfReader extends Component < Props, State > {
 	state = { ready: false, android: false, ios: false, data: undefined, renderedOnce: false }
 
 	async init() {
+		const { onLoad } = this.props;
 		try {
 			const { source, magName } = this.props
 			const ios = Platform.OS === 'ios'
@@ -169,19 +173,26 @@ class PdfReader extends Component < Props, State > {
 				data = await fetchPdfAsync(source.uri, magName.name, true)
 				ready = !!data
 			} else if (source.base64 && source.base64.startsWith('data')) {
+				console.log("base64: " + source.base64.substring(0,10) + "...");
 				data = source.base64
 				ready = true
 			} else if (ios) {
-				console.log("Downloading " + magName.name + " from internet");
+				/*console.log("Downloading " + magName.name + " from internet");
 				data = await fetchPdfAsync(source.uri, magName.name, false)
-				ready = !!data
+				ready = !!data*/
+				console.log("hi");
+				data = source.uri
 			} else {
 				alert('source props is not correct')
 				return
 			}
 
 			if (android) {
-				await writeWebViewReaderFileAsync(data)
+				await writeWebViewReaderFileAsync(data, magName.name)
+			}
+
+			if (onLoad && ready === true) {
+				onLoad();
 			}
 
 			this.setState({ ready, data })
@@ -208,7 +219,7 @@ class PdfReader extends Component < Props, State > {
 		const { ready, data, ios, android, renderedOnce } = this.state
 		const { style } = this.props
 
-		if (data && ios && ready) {
+		if (data && ios) {
 			console.log("Rendering iOS...\n" + data);
 			return (
 				<View style={[styles.container, style]}>

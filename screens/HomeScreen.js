@@ -104,9 +104,19 @@ class PDF extends React.Component {
 		//Download the touched magazine
 			try {
 				console.log("Searching for '" + currentMag + "'");
-				AsyncStorage.getItem('@' + currentMag).then((value) => {
+				//MIGRATE FILESYSTEM
+				/*AsyncStorage.getItem('@' + currentMag).then((value) => {
 					if (value !== null) {
 						console.log("Found magazine in local data");
+						this.setState({base64: value});
+					} else {
+						console.log("Did not find magazine in local data");
+						currentMag.getDownloadURL().then((uri)=>this.setState({uri}));
+					}
+				});*/
+				readPermanent(currentMag).then((value) => {
+					if (value !== null) {
+						console.log("Found magazine in local data: " + value.substring(0,10));
 						this.setState({base64: value});
 					} else {
 						console.log("Did not find magazine in local data");
@@ -402,6 +412,7 @@ class ArticleList extends React.Component {
 
 //Main Render
 export default class HomeScreen extends React.Component {
+	
 	static navigationOptions = {
 		title: 'Articles',
 		header: null,
