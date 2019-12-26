@@ -15,6 +15,7 @@ const {
 	cacheDirectory,
 	documentDirectory,
 	writeAsStringAsync,
+	readAsStringAsync,
 	deleteAsync,
 	getInfoAsync,
 } = FileSystem
@@ -56,11 +57,11 @@ export async function removeFilesAsync(): Promise < * > {
 
 export async function storePermanent(data:string, magazineName: string): Promise < * > {
 	console.log("Storing '" + magazineName + "' at " + storagePath);
-	await writeAsStringAsync(storagePath + magazineName + "/index.html", viewerHtml(data))
+	await writeAsStringAsync((storagePath + magazineName + "/index.html"), viewerHtml(data))
 }
 
-//FIX EXPORT
 export async function readPermanent(magazineName: string): Promise < * > {
+	await getInfoAsync(storagePath + magazineName + "/index.html")
 	console.log("Reading '" + magazineName + "' at " + storagePath);
 	await readAsStringAsync(storagePath + magazineName + "/index.html")
 }

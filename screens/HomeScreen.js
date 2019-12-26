@@ -31,8 +31,11 @@ import {
 	MonoText
 } from '../components/StyledText';
 
-import firebase from "firebase";
-import PDFReader from '../rn-pdf-reader-js/index';
+import firebase from "../components/firebase";
+import {
+	PDFReader,
+	readPermanent
+} from '../rn-pdf-reader-js/index';
 import TabBarIcon from '../components/TabBarIcon';
 import Colors from '../constants/Colors';
 
@@ -76,16 +79,6 @@ if (Platform.OS === 'android') {
   };
 }
 
-//Initialize Firebase
-var config = {
-	apiKey: "AIzaSyAvFJ1VI_UNcHd2KJavI4on7PuQUTb1fCU",
-	authDomain: "bulletin-magazine.firebaseapp.com",
-	databaseURL: "https://bulletin-magazine.firebaseio.com",
-	projectId: "bulletin-magazine",
-	storageBucket: "bulletin-magazine.appspot.com",
-	messagingSenderId: "117437380192"
-};
-firebase.initializeApp(config);
 var storage = firebase.storage();
 var database = firebase.database();
 var storageRef = storage.ref();
@@ -104,16 +97,7 @@ class PDF extends React.Component {
 		//Download the touched magazine
 			try {
 				console.log("Searching for '" + currentMag + "'");
-				//MIGRATE FILESYSTEM
-				/*AsyncStorage.getItem('@' + currentMag).then((value) => {
-					if (value !== null) {
-						console.log("Found magazine in local data");
-						this.setState({base64: value});
-					} else {
-						console.log("Did not find magazine in local data");
-						currentMag.getDownloadURL().then((uri)=>this.setState({uri}));
-					}
-				});*/
+				
 				readPermanent(currentMag).then((value) => {
 					if (value !== null) {
 						console.log("Found magazine in local data: " + value.substring(0,10));
