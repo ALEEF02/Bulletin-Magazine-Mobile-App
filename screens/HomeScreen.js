@@ -32,10 +32,8 @@ import {
 } from '../components/StyledText';
 
 import firebase from "../components/firebase";
-import {
-	PDFReader,
-	readPermanent
-} from '../rn-pdf-reader-js/index';
+import {readPermanent} from '../rn-pdf-reader-js/index';
+import PDFReader from '../rn-pdf-reader-js/index';
 import TabBarIcon from '../components/TabBarIcon';
 import Colors from '../constants/Colors';
 
@@ -85,6 +83,7 @@ var storageRef = storage.ref();
 
 var articleList = [];
 var currentMag = storageRef.child('issue 6 2.pdf');
+var magShortName = "";
 var source = { uri: 'https://www.orimi.com/pdf-test.pdf' };
 
 //PDF Render Class
@@ -99,12 +98,15 @@ class PDF extends React.Component {
 				console.log("Searching for '" + currentMag + "'");
 				
 				readPermanent(currentMag).then((value) => {
-					if (value !== null) {
+					console.log("readPermanent return: " + value);
+					if (value !== false) {
 						console.log("Found magazine in local data: " + value.substring(0,10));
 						this.setState({base64: value});
 					} else {
 						console.log("Did not find magazine in local data");
-						currentMag.getDownloadURL().then((uri)=>this.setState({uri}));
+						currentMag.getDownloadURL().then((uri)=> {
+							this.setState({uri});
+						});
 					}
 				});
 			} catch (error) {
@@ -120,8 +122,8 @@ class PDF extends React.Component {
 		return (
 			<View style={styles.container}>
 				{
-					this.state.uri != "" ? <PDFReader style={{flex:1}} source={{ uri:this.state.uri }} magName={{ name:currentMag }} /> : 
-					this.state.base64 != "" ? <PDFReader style={{flex:1}} source={{ base64:this.state.base64 }} magName={{ currentMag }} /> : 
+					this.state.uri != "" ? <PDFReader style={{flex:1}} source={{ uri:this.state.uri }} magName={{ name:magShortName }} /> : 
+					this.state.base64 != "" ? <PDFReader style={{flex:1}} source={{ base64:this.state.base64 }} magName={{ name:magShortName }} /> : 
 					<Text>Loading...</Text>
 				}
 			</View>
@@ -156,6 +158,7 @@ class SectionListItem extends React.Component {
 	_openArticle = (articleName) => {
 		console.log('Clicked ' + articleName);
 		currentMag = storageRef.child(articleName);
+		magShortName = articleName.replace(".", "");
 		//Set the currentMag to the corresponding article
 		this.setState(previousState => (
 			{ openArticle: !previousState.openArticle }
