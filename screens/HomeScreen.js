@@ -31,8 +31,7 @@ import {
 	MonoText
 } from '../components/StyledText';
 
-import firebase from "../components/firebase";
-import {readPermanent} from '../rn-pdf-reader-js/index';
+import firebase from "firebase";
 import PDFReader from '../rn-pdf-reader-js/index';
 import TabBarIcon from '../components/TabBarIcon';
 import Colors from '../constants/Colors';
@@ -77,18 +76,26 @@ if (Platform.OS === 'android') {
   };
 }
 
+//Initialize Firebase
+var config = {
+	apiKey: "AIzaSyAvFJ1VI_UNcHd2KJavI4on7PuQUTb1fCU",
+	authDomain: "bulletin-magazine.firebaseapp.com",
+	databaseURL: "https://bulletin-magazine.firebaseio.com",
+	projectId: "bulletin-magazine",
+	storageBucket: "bulletin-magazine.appspot.com",
+	messagingSenderId: "117437380192"
+};
+firebase.initializeApp(config);
 var storage = firebase.storage();
 var database = firebase.database();
 var storageRef = storage.ref();
 
 var articleList = [];
 var currentMag = storageRef.child('issue 6 2.pdf');
-var magShortName = "";
 var source = { uri: 'https://www.orimi.com/pdf-test.pdf' };
 
 //PDF Render Class
 class PDF extends React.Component {
-	
 	constructor(props) {
 		super(props);
 		this.state = { uri: "", base64: ""};
@@ -104,13 +111,11 @@ class PDF extends React.Component {
 						this.setState({base64: value});
 					} else {
 						console.log("Did not find magazine in local data");
-						currentMag.getDownloadURL().then((uri)=> {
-							this.setState({uri});
-						});
+						currentMag.getDownloadURL().then((uri)=>this.setState({uri}));
 					}
 				});
 			} catch (error) {
-				console.warn("Error retrieving mag: " + error);
+				console.log("Error retrieving mag: " + error);
 				currentMag.getDownloadURL().then((uri)=>this.setState({uri}));
 			}
 	}
@@ -120,10 +125,13 @@ class PDF extends React.Component {
 			console.log("URI: '" + this.state.uri + "' Base64: '" + this.state.base64 + "' currentMag: " + currentMag + " magShortName: " + magShortName);
 		}
 		return (
+			if (this.state.uri != "" || this.state.base64 != "") {
+				console.log("URI: '" + this.state.uri + "' Base64: '" + this.state.base64 + "'");
+			}
 			<View style={styles.container}>
 				{
-					this.state.uri != "" ? <PDFReader style={{flex:1}} source={{ uri:this.state.uri }} magName={{ name:magShortName }} /> : 
-					this.state.base64 != "" ? <PDFReader style={{flex:1}} source={{ base64:this.state.base64 }} magName={{ name:magShortName }} /> : 
+					this.state.uri != "" ? <PDFReader style={{flex:1}} source={{ uri:this.state.uri }} magName={{ currentMag }} /> : 
+					this.state.base64 != "" ? <PDFReader style={{flex:1}} source={{ base64:this.state.base64 }} magName={{ currentMag }} /> : 
 					<Text>Loading...</Text>
 				}
 			</View>
@@ -158,7 +166,6 @@ class SectionListItem extends React.Component {
 	_openArticle = (articleName) => {
 		console.log('Clicked ' + articleName);
 		currentMag = storageRef.child(articleName);
-		magShortName = articleName.replace(".", "");
 		//Set the currentMag to the corresponding article
 		this.setState(previousState => (
 			{ openArticle: !previousState.openArticle }
@@ -399,7 +406,6 @@ class ArticleList extends React.Component {
 
 //Main Render
 export default class HomeScreen extends React.Component {
-	
 	static navigationOptions = {
 		title: 'Articles',
 		header: null,

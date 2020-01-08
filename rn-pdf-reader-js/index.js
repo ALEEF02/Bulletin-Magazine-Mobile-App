@@ -1,29 +1,25 @@
 // @flow
 import React, { Component } from 'react'
 import {
-	AsyncStorage,
-	View,
-	ActivityIndicator,
-	Platform,
-	StyleSheet,
+  AsyncStorage,
+  View,
+  ActivityIndicator,
+  Platform,
+  StyleSheet,
 } from 'react-native'
-import { WebView } from "react-native-webview";
+import { WebView } from 'react-native-webview';
 import * as FileSystem from 'expo-file-system'
 import Constants from 'expo-constants'
 
 const {
-	cacheDirectory,
-	documentDirectory,
-	writeAsStringAsync,
-	readAsStringAsync,
-	readDirectoryAsync,
-	makeDirectoryAsync,
-	deleteAsync,
-	getInfoAsync,
+  cacheDirectory,
+  writeAsStringAsync,
+  deleteAsync,
+  getInfoAsync,
 } = FileSystem
 
 function viewerHtml(base64: string): string {
-	return `
+  return `
  <!DOCTYPE html>
  <html>
    <head>
@@ -40,22 +36,19 @@ function viewerHtml(base64: string): string {
 `
 }
 const bundleJsPath = `${cacheDirectory}bundle.js`
-const storagePath = `${documentDirectory}`
 const htmlPath = `${cacheDirectory}index.html`
 
-async function writeWebViewReaderFileAsync(data: string, magazineName: string): Promise < * > {
-	const { exist, md5 } = await getInfoAsync(bundleJsPath, { md5: true })
-	const bundleContainer = require('./bundleContainer')
-	if (!exist || bundleContainer.getBundleMd5() !== md5) {
-		await writeAsStringAsync(bundleJsPath, bundleContainer.getBundle())
-	}
-	await writeAsStringAsync(htmlPath, viewerHtml(data))
-	await storePermanent(data, magazineName)
+async function writeWebViewReaderFileAsync(data: string): Promise<*> {
+  const { exist, md5 } = await getInfoAsync(bundleJsPath, { md5: true })
+  const bundleContainer = require('./bundleContainer')
+  if (!exist || bundleContainer.getBundleMd5() !== md5) {
+    await writeAsStringAsync(bundleJsPath, bundleContainer.getBundle())
+  }
+  await writeAsStringAsync(htmlPath, viewerHtml(data))
 }
 
-export async function removeFilesAsync(): Promise < * > {
-	await deleteAsync(storagePath);
-	await deleteAsync(htmlPath);
+export async function removeFilesAsync(): Promise<*> {
+  await deleteAsync(htmlPath)
 }
 
 export async function storePermanent(data:string, magazineName: string): Promise < * > {
@@ -115,65 +108,69 @@ function readAsTextAsync(mediaBlob: Blob, magazineName: string): Promise < strin
 		} catch (error) {
 			reject(error)
 		}
-	})
+        return reject(
+          `Unable to get result of file due to bad type, waiting string and getting ${typeof reader.result}.`,
+        )
+      }
+      reader.readAsDataURL(mediaBlob)
+    } catch (error) {
+      reject(error)
+    }
+  })
 }
 
-async function fetchPdfAsync(url: string, currentMagName: string, isAndroid: boolean): Promise < string > {
-	console.log('Getting blob for ' + url);
-	const mediaBlob = await urlToBlob(url);
-	console.log('Calling readAsTextAsync with ' + mediaBlob + ' and ' + currentMagName);
-	return readAsTextAsync(mediaBlob, currentMagName)
+async function fetchPdfAsync(url: string, currentMagName: string): Promise<string> {
+  const mediaBlob = await urlToBlob(url)
+  return readAsTextAsync(mediaBlob, currentMagName)
 }
 
 async function urlToBlob(url) {
-	return new Promise((resolve, reject) => {
-		var xhr = new XMLHttpRequest()
-		xhr.onerror = reject
-		xhr.onreadystatechange = () => {
-			if (xhr.readyState === 4) {
-				resolve(xhr.response)
-			}
-		}
-		xhr.open('GET', url)
-		xhr.responseType = 'blob'
-		xhr.send()
-	})
+  return new Promise((resolve, reject) => {
+    var xhr = new XMLHttpRequest()
+    xhr.onerror = reject
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState === 4) {
+        resolve(xhr.response)
+      }
+    }
+    xhr.open('GET', url)
+    xhr.responseType = 'blob'
+    xhr.send()
+  })
 }
 
 const Loader = () => (
-	<View style={{ flex: 1, justifyContent: 'center' }}>
+  <View style={{ flex: 1, justifyContent: 'center' }}>
     <ActivityIndicator size="large" />
   </View>
 )
 
 const styles = StyleSheet.create({
-	container: {
-		flex: 1,
-		paddingTop: Constants.statusBarHeight,
-		backgroundColor: '#ecf0f1',
-	},
-	webview: {
-		flex: 1,
-		backgroundColor: 'rgb(82, 86, 89)',
-	},
+  container: {
+    flex: 1,
+    paddingTop: Constants.statusBarHeight,
+    backgroundColor: '#ecf0f1',
+  },
+  webview: {
+    flex: 1,
+    backgroundColor: 'rgb(82, 86, 89)',
+  },
 })
 
 type Props = {
-	source: {
-		uri ? : string,
-		base64 ? : string
-	},
-	magName: {
-		string ? : string
-	},
-	style: object
+  source: {
+    uri?: string,
+    base64?: string
+  },
+  magName: string,
+  style: object
 }
 
 type State = {
-	ready: boolean,
-	android: boolean,
-	ios: boolean,
-	data ? : string,
+  ready: boolean,
+  android: boolean,
+  ios: boolean,
+  data?: string,
 }
 
 class PdfReader extends Component < Props, State > {
