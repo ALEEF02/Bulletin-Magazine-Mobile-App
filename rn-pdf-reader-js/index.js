@@ -62,17 +62,17 @@ export async function storePermanent(data:string, magazineName: string): Promise
 	//let options = { encoding: FileSystem.EncodingType.Base64 };
 	let options = { encoding: FileSystem.EncodingType.UTF8 };
 	
-	console.log("Storing '" + magazineName + "' at " + encodeURI(storagePath + magazineName + "/index.html"));
+	console.log("Storing '" + magazineName + "' at " + encodeURI(storagePath + magazineName + ".html"));
 	const dataHtml = await viewerHtml(data);
 	console.log("HTML: " + dataHtml.substring(0,100) + "...");
 	try {
-		const directoryCheck = await readDirectoryAsync(encodeURI(storagePath + magazineName));
-		console.log(directoryCheck);
+		const { exist, md5 } = await getInfoAsync((encodeURI(storagePath + magazineName)), { md5: true });
+		console.log("Exists: " + exist + " md5: " + md5);
 	} catch (e) {
 		console.warn("Directory error: " + e);
 		await makeDirectoryAsync(encodeURI(storagePath + magazineName));
 	}
-	await writeAsStringAsync(encodeURI(storagePath + magazineName + "/index.html"), dataHtml, options)
+	await writeAsStringAsync(encodeURI(storagePath + magazineName + ".html"), dataHtml, options)
 }
 
 export async function readPermanent(magazineName: string): Promise < * > {
@@ -80,8 +80,8 @@ export async function readPermanent(magazineName: string): Promise < * > {
 	let options = { encoding: FileSystem.EncodingType.UTF8 };
 	
 	try {
-		console.log("Reading '" + magazineName + "' at " + encodeURI(storagePath + magazineName + "/index.html"));
-		await readAsStringAsync(encodeURI(storagePath + magazineName + "/index.html"), options);
+		console.log("Reading '" + magazineName + "' at " + encodeURI(storagePath + magazineName + ".html"));
+		await readAsStringAsync(encodeURI(storagePath + magazineName + ".html"), options);
 	} catch (e) {
 		console.warn("Couldn't find article: " + e);
 	}
@@ -246,7 +246,7 @@ class PdfReader extends Component < Props, State > {
 		const { style } = this.props
 
 		if (data && ios) {
-			console.log("Rendering iOS...\n" + data.substring(0,20) + "\nURL: " + encodeURI(storagePath + this.props.magName.name + "/index.html"));
+			console.log("Rendering iOS...\n" + data.substring(0,20) + "\nURL: " + encodeURI(storagePath + this.props.magName.name + ".html"));
 			return (
 				<View style={[styles.container, style]}>
 					{!ready && <Loader />}
@@ -261,7 +261,7 @@ class PdfReader extends Component < Props, State > {
 						allowUniversalAccessFromFileURLs={true}
 						domStorageEnabled={true}
 						mixedContentMode="always"
-						source={{ uri: encodeURI(storagePath + this.props.magName.name + "/index.html") }}
+						source={{ uri: encodeURI(storagePath + this.props.magName.name + ".html") }}
 					/>
 				</View>
 			)

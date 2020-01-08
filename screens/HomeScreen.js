@@ -95,9 +95,9 @@ class PDF extends React.Component {
 		console.log('Current Mag: ' + currentMag);
 		//Download the touched magazine
 			try {
-				console.log("Searching for '" + currentMag + "'");
+				console.log("Searching for '" + magShortName + "'");
 				
-				readPermanent(currentMag).then((value) => {
+				readPermanent(magShortName).then((value) => {
 					console.log("readPermanent return: " + value);
 					if (value !== false) {
 						console.log("Found magazine in local data: " + value.substring(0,10));
@@ -117,7 +117,7 @@ class PDF extends React.Component {
 
     render() {
 		if (this.state.uri != "" || this.state.base64 != "") {
-			console.log("URI: '" + this.state.uri + "' Base64: '" + this.state.base64 + "' currentMag: " + currentMag);
+			console.log("URI: '" + this.state.uri + "' Base64: '" + this.state.base64 + "' currentMag: " + currentMag + " magShortName: " + magShortName);
 		}
 		return (
 			<View style={styles.container}>
