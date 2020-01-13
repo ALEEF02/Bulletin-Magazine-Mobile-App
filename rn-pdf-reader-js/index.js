@@ -23,6 +23,7 @@ const {
 } = FileSystem
 
 function viewerHtml(base64: string): string {
+	console.log("bsae64 passed to viewerHtml: " + base64.substring(0,30));
 	return `
  <!DOCTYPE html>
  <html>
@@ -40,7 +41,7 @@ function viewerHtml(base64: string): string {
 `
 }
 const bundleJsPath = `${cacheDirectory}bundle.js`
-const storagePath = `${documentDirectory}`
+const storagePath = FileSystem.documentDirectory;
 const htmlPath = `${cacheDirectory}index.html`
 
 async function writeWebViewReaderFileAsync(data: string, magazineName: string): Promise < * > {
@@ -66,13 +67,18 @@ export async function storePermanent(data:string, magazineName: string): Promise
 	const dataHtml = await viewerHtml(data);
 	console.log("HTML: " + dataHtml.substring(0,100) + "...");
 	try {
-		const { exist, md5 } = await getInfoAsync((encodeURI(storagePath + magazineName)), { md5: true });
-		console.log("Exists: " + exist + " md5: " + md5);
+		const { exists, md5 } = await getInfoAsync(storagePath, { md5: true });
+		console.log("Exists: " + exists + " md5: " + md5);
 	} catch (e) {
 		console.warn("Directory error: " + e);
 		await makeDirectoryAsync(encodeURI(storagePath + magazineName));
 	}
-	await writeAsStringAsync(encodeURI(storagePath + magazineName + ".html"), dataHtml, options)
+	
+	try {
+		await writeAsStringAsync(encodeURI(storagePath + magazineName + ".html"), dataHtml, options);
+	} catch (e) {
+		console.warn("Article storage " + e);
+	}
 }
 
 export async function readPermanent(magazineName: string): Promise < * > {
@@ -97,7 +103,11 @@ function readAsTextAsync(mediaBlob: Blob, magazineName: string): Promise < strin
 					try {
 						console.log("Storing article '" + magazineName + "' - " + reader.result.substring(0,30) + "...");
 						storePermanent(reader.result, magazineName).then((value) => {
-							console.log("Stored " + value.substring(0,30) + "...");
+							if (value != undefined) {
+								console.log("Stored " + value.substring(0,30) + "...");
+							} else {
+								console.warn("storePermanent returned undefined!");
+							}
 						});
 					} catch (error) {
 						console.warn("Error saving article: " + error);
@@ -204,8 +214,9 @@ class PdfReader extends Component < Props, State > {
 				data = source.base64
 				ready = true
 			} else if (ios) {
-				console.log("Downloading " + magName.name + " from internet");
-				data = viewerHtml(await fetchPdfAsync(source.uri, magName.name, false))
+				console.log("Downloading " + magName.name + " from internet for iOS");
+				data = viewerHtml(await fetchPdfAsync(source.uri, magName.name, false));
+				console.log("Moving to begin rendering article. data: " + data.substring(0,50));
 				//console.log("hi");
 				//data = source.uri
 			} else {
