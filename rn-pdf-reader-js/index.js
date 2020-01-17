@@ -23,7 +23,7 @@ const {
 } = FileSystem
 
 function viewerHtml(base64: string): string {
-	console.log("bsae64 passed to viewerHtml: " + base64.substring(0,30));
+	console.log("base64 passed to viewerHtml: " + base64.substring(0,30));
 	return `
  <!DOCTYPE html>
  <html>
@@ -41,8 +41,19 @@ function viewerHtml(base64: string): string {
 `
 }
 const bundleJsPath = `${cacheDirectory}bundle.js`
-const storagePath = FileSystem.documentDirectory;
+var storagePath = FileSystem.documentDirectory;
 const htmlPath = `${cacheDirectory}index.html`
+
+async function checkPath() {
+	console.log("Checking and correcting path");
+	try {
+		const { exists, md5, isDirectory, uri } = await getInfoAsync(storagePath, { md5: true });
+		console.log("Exists: " + exists + " isDirectory: " + isDirectory + " uri: " + uri);
+	} catch (e) {
+		console.warn("Directory error: " + e);
+		await makeDirectoryAsync(storagePath + magazineName);
+	}
+}
 
 async function writeWebViewReaderFileAsync(data: string, magazineName: string): Promise < * > {
 	const { exist, md5 } = await getInfoAsync(bundleJsPath, { md5: true })
@@ -60,34 +71,24 @@ export async function removeFilesAsync(): Promise < * > {
 }
 
 export async function storePermanent(data:string, magazineName: string): Promise < * > {
-	//let options = { encoding: FileSystem.EncodingType.Base64 };
-	let options = { encoding: FileSystem.EncodingType.UTF8 };
+	let options = { encoding: FileSystem.EncodingType.Base64 };
 	
-	console.log("Storing '" + magazineName + "' at " + encodeURI(storagePath + magazineName + ".html"));
-	const dataHtml = await viewerHtml(data);
-	console.log("HTML: " + dataHtml.substring(0,100) + "...");
-	try {
-		const { exists, md5 } = await getInfoAsync(storagePath, { md5: true });
-		console.log("Exists: " + exists + " md5: " + md5);
-	} catch (e) {
-		console.warn("Directory error: " + e);
-		await makeDirectoryAsync(encodeURI(storagePath + magazineName));
-	}
+	console.log("Storing '" + magazineName + "' at " + (storagePath + magazineName + ".html"));
+	console.log("base64: " + data.substring(0,100) + "...");
 	
 	try {
-		await writeAsStringAsync(encodeURI(storagePath + magazineName + ".html"), dataHtml, options);
+		await writeAsStringAsync((storagePath + magazineName + ".html"), data, options);
 	} catch (e) {
 		console.warn("Article storage " + e);
 	}
 }
 
 export async function readPermanent(magazineName: string): Promise < * > {
-	//let options = { encoding: FileSystem.EncodingType.Base64 };
-	let options = { encoding: FileSystem.EncodingType.UTF8 };
+	let options = { encoding: FileSystem.EncodingType.Base64 };
 	
 	try {
-		console.log("Reading '" + magazineName + "' at " + encodeURI(storagePath + magazineName + ".html"));
-		await readAsStringAsync(encodeURI(storagePath + magazineName + ".html"), options);
+		console.log("Reading '" + magazineName + "' at " + (storagePath + magazineName + ".html"));
+		return await readAsStringAsync((storagePath + magazineName + ".html"), options);
 	} catch (e) {
 		console.warn("Couldn't find article: " + e);
 	}
@@ -243,6 +244,7 @@ class PdfReader extends Component < Props, State > {
 
 	componentDidMount() {
 		console.log("Created PdfReader instance");
+		checkPath();
 		this.init()
 	}
 
@@ -257,7 +259,7 @@ class PdfReader extends Component < Props, State > {
 		const { style } = this.props
 
 		if (data && ios) {
-			console.log("Rendering iOS...\n" + data.substring(0,20) + "\nURL: " + encodeURI(storagePath + this.props.magName.name + ".html"));
+			console.log("Rendering iOS...\n" + data.substring(0,20) + "\nURL: " + (storagePath + this.props.magName.name + ".html"));
 			return (
 				<View style={[styles.container, style]}>
 					{!ready && <Loader />}
@@ -272,7 +274,7 @@ class PdfReader extends Component < Props, State > {
 						allowUniversalAccessFromFileURLs={true}
 						domStorageEnabled={true}
 						mixedContentMode="always"
-						source={{ uri: encodeURI(storagePath + this.props.magName.name + ".html") }}
+						source={{ uri: (storagePath + this.props.magName.name + ".html") }}
 					/>
 				</View>
 			)
