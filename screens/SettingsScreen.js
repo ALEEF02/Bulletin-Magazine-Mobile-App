@@ -1,7 +1,7 @@
 import React from 'react';
 import * as FileSystem from 'expo-file-system';
 import { SectionList, Image, StyleSheet, Text, View } from 'react-native';
-import { Constants } from 'expo';
+import Constants from 'expo-constants';
 
 const {
 	getFreeDiskStorageAsync,
@@ -9,79 +9,53 @@ const {
 	getInfoAsync,
 } = FileSystem
 
-var avalibleStorage;
-var totalStorage;
+var avalibleStorage = 0;
+var totalStorage = 0;
 
 class ExpoConfigView extends React.Component {
   constructor(props) {
 	super(props);
+	this.state = { 
+		avalibleStorageState: "", 
+		totalStorageState: "", 
+		sections: [
+			{ data: [{ value: 0 }], title: 'Storage avalible' },
+			{ data: [{ value: 0 }], title: 'Total storage' }
+		]
+	};
 	getFreeDiskStorageAsync().then(freeDiskStorage => {
 		avalibleStorage = freeDiskStorage;
 		avalibleStorage /= 1000000000;
-		avalibleStorage += " GB";
+		avalibleStorage = (avalibleStorage + " GB");
+		console.log(avalibleStorage);
+		this.setState({avalibleStorageState: avalibleStorage});
 	});
 	getTotalDiskCapacityAsync().then(totalDiskCapacity => {
 		totalStorage = totalDiskCapacity;
 		totalStorage /= 1000000000;
-		totalStorage += " GB";
+		totalStorage = (totalStorage + " GB");
+		console.log(totalStorage);
+		this.setState({totalStorageState: totalStorage, sections: [
+			{ data: [{ value: this.state.avalibleStorage }], title: 'Storage avalible' },
+			{ data: [{ value: this.state.totalStorage }], title: 'Total storage' }
+		]});
+		console.log("Free storage: " + this.state.avalibleStorageState + ", Total storage: " + this.state.totalStorageState);
 	});
   }
   
   render() {
-    const { manifest } = Constants;
-    const sections = [
-      { data: [{ value: manifest.sdkVersion }], title: 'sdkVersion' },
-      { data: [{ value: manifest.privacy }], title: 'privacy' },
-      { data: [{ value: manifest.version }], title: 'version' },
-      { data: [{ value: manifest.orientation }], title: 'orientation' },
-      {
-        data: [{ value: manifest.primaryColor, type: 'color' }],
-        title: 'primaryColor',
-      },
-      {
-        data: [{ value: manifest.splash && manifest.splash.image }],
-        title: 'splash.image',
-      },
-      {
-        data: [
-          {
-            value: manifest.splash && manifest.splash.backgroundColor,
-            type: 'color',
-          },
-        ],
-        title: 'splash.backgroundColor',
-      },
-      {
-        data: [
-          {
-            value: manifest.splash && manifest.splash.resizeMode,
-          },
-        ],
-        title: 'splash.resizeMode',
-      },
-      {
-        data: [
-          {
-            value:
-              manifest.ios && manifest.ios.supportsTablet ? 'true' : 'false',
-          },
-        ],
-        title: 'ios.supportsTablet',
-      },
-      { data: [{ value: avalibleStorage }], title: 'Storage avalible' },
-      { data: [{ value: totalStorage }], title: 'Total storage' },
-    ];
 
     return (
-      <SectionList
-        style={styles.container}
-        renderItem={this._renderItem}
-        renderSectionHeader={this._renderSectionHeader}
-        stickySectionHeadersEnabled={true}
-        keyExtractor={(item, index) => index}
-        ListHeaderComponent={ListHeader}
-        sections={sections}
-      />
+		this.state.totalStorageState != "" ? <SectionList
+			style={styles.container}
+			renderItem={this._renderItem}
+			renderSectionHeader={this._renderSectionHeader}
+			stickySectionHeadersEnabled={true}
+			keyExtractor={(item, index) => item.title}
+			ListHeaderComponent={ListHeader}
+			sections={this.state.sections}
+		/> : 
+		<Text>Loading...</Text>
     );
   }
 
@@ -184,6 +158,20 @@ const Color = ({ value }) => {
   }
 };
 
+export default class SettingsScreen extends React.Component {
+  static navigationOptions = {
+    title: 'app.json',
+  };
+
+  render() {
+    return (
+		<View style={styles.container}>
+			<ExpoConfigView />
+		</View>
+	);
+  }
+}
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -248,18 +236,3 @@ const styles = StyleSheet.create({
     flex: 1,
   },
 });
-
-export default class SettingsScreen extends React.Component {
-  static navigationOptions = {
-    title: 'app.json',
-  };
-
-  render() {
-    const { manifest } = Constants;	  
-    return (
-		<View>
-			<ExpoConfigView />
-		</View>
-	);
-  }
-}

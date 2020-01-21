@@ -214,11 +214,13 @@ class PdfReader extends Component < Props, State > {
 				console.log("base64: " + source.base64.substring(0,10) + "...");
 				data = source.base64
 				ready = true
+			} else if (ios && source.base64) {
+				data = viewerHtml(source.base64);
+				console.log("data prop created using cached data: " + data.substring(0,30));
 			} else if (ios) {
 				console.log("Downloading " + magName.name + " from internet for iOS");
 				data = viewerHtml(await fetchPdfAsync(source.uri, magName.name, false));
-				console.log("Moving to begin rendering article. data: " + data.substring(0,50));
-				//console.log("hi");
+				console.log("data prop created using downloaded data data: " + data.substring(0,50));
 				//data = source.uri
 			} else {
 				console.error('source props is not correct')
@@ -274,7 +276,7 @@ class PdfReader extends Component < Props, State > {
 						allowUniversalAccessFromFileURLs={true}
 						domStorageEnabled={true}
 						mixedContentMode="always"
-						source={{ uri: (storagePath + this.props.magName.name + ".html") }}
+						source={{ html: data }}
 					/>
 				</View>
 			)

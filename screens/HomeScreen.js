@@ -101,7 +101,7 @@ class PDF extends React.Component {
 					console.log("readPermanent return: " + value);
 					if (value !== false) {
 						console.log("Found magazine in local data: " + value.substring(0,10));
-						this.setState({base64: value});
+						this.setState({base64: ("data:application/pdf;base64," + value)});
 					} else {
 						console.log("Did not find magazine in local data");
 						currentMag.getDownloadURL().then((uri)=> {
