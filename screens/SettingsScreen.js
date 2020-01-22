@@ -4,9 +4,11 @@ import { SectionList, Image, StyleSheet, Text, View } from 'react-native';
 import Constants from 'expo-constants';
 
 const {
+	documentDirectory,
 	getFreeDiskStorageAsync,
 	getTotalDiskCapacityAsync,
 	getInfoAsync,
+	readDirectoryAsync
 } = FileSystem
 
 var avalibleStorage = 0;
@@ -16,28 +18,38 @@ class ExpoConfigView extends React.Component {
   constructor(props) {
 	super(props);
 	this.state = { 
-		avalibleStorageState: "", 
-		totalStorageState: "", 
+		avalibleStorageState: 0, 
+		totalStorageState: 0, 
 		sections: [
 			{ data: [{ value: 0 }], title: 'Storage avalible' },
 			{ data: [{ value: 0 }], title: 'Total storage' }
 		]
 	};
+	readDirectoryAsync(documentDirectory).then(subFiles => {
+		console.log("Subdirs:" + JSON.stringify(subFiles));
+		for (var i = 0; i < subFiles.length; i++) {
+			getInfoAsync((documentDirectory + subFiles[i]), {size: true}).then(info => {
+				console.log("size: " + info.size + " bytes");
+				//TODO: Add all sizes, render
+			});
+		}
+	});
 	getFreeDiskStorageAsync().then(freeDiskStorage => {
 		avalibleStorage = freeDiskStorage;
 		avalibleStorage /= 1000000000;
-		avalibleStorage = (avalibleStorage + " GB");
+		avalibleStorage = (avalibleStorage.toFixed(2) + " GB");
 		console.log(avalibleStorage);
 		this.setState({avalibleStorageState: avalibleStorage});
 	});
 	getTotalDiskCapacityAsync().then(totalDiskCapacity => {
 		totalStorage = totalDiskCapacity;
 		totalStorage /= 1000000000;
-		totalStorage = (totalStorage + " GB");
+		totalStorage = (totalStorage.toFixed(2) + " GB");
 		console.log(totalStorage);
-		this.setState({totalStorageState: totalStorage, sections: [
-			{ data: [{ value: this.state.avalibleStorage }], title: 'Storage avalible' },
-			{ data: [{ value: this.state.totalStorage }], title: 'Total storage' }
+		this.setState({totalStorageState: totalStorage});
+		this.setState({sections: [
+			{ data: [{ value: this.state.avalibleStorageState }], title: 'Storage avalible' },
+			{ data: [{ value: this.state.totalStorageState }], title: 'Total storage' }
 		]});
 		console.log("Free storage: " + this.state.avalibleStorageState + ", Total storage: " + this.state.totalStorageState);
 	});
@@ -46,7 +58,7 @@ class ExpoConfigView extends React.Component {
   render() {
 
     return (
-		this.state.totalStorageState != "" ? <SectionList
+		this.state.sections[1].data.value != 0 ? <SectionList
 			style={styles.container}
 			renderItem={this._renderItem}
 			renderSectionHeader={this._renderSectionHeader}
