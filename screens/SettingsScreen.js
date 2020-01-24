@@ -4,6 +4,7 @@ import { SectionList, Image, StyleSheet, Text, View } from 'react-native';
 import Constants from 'expo-constants';
 
 const {
+	cacheDirectory,
 	documentDirectory,
 	getFreeDiskStorageAsync,
 	getTotalDiskCapacityAsync,
@@ -13,26 +14,48 @@ const {
 
 var avalibleStorage = 0;
 var totalStorage = 0;
+var usedStorage = 0;
+
+async function getDocumentSizes(path): Promise<string> {
+	if (path == undefined) {
+		path = "";
+	}
+	readDirectoryAsync(documentDirectory + path).then(subFiles => {
+		console.log("Subdirs documentDirectory/" + path + "\n" + JSON.stringify(subFiles));
+		for (var i = 0; i < subFiles.length; i++) {
+			if (subFiles[i].includes(".") == true) {
+				getInfoAsync((documentDirectory + subFiles[i]), {size: true}).then(info => {
+					console.log("Size: " + info.size + " bytes");
+					if (info.size != undefined) {
+						usedStorage += info.size;
+					}
+				});
+			}
+		}
+	}).catch(e => {
+		console.warn("Error reading file size\n" + e);
+	});
+	console.log("Total used storage: " + usedStorage);
+	return usedStorage;
+}
 
 class ExpoConfigView extends React.Component {
   constructor(props) {
 	super(props);
 	this.state = { 
+		usedStorageState: 0,
 		avalibleStorageState: 0, 
-		totalStorageState: 0, 
+		totalStorageState: 0,
 		sections: [
+			{ data: [{ value: 0 }], title: 'Stoarge used by articles' },
 			{ data: [{ value: 0 }], title: 'Storage avalible' },
 			{ data: [{ value: 0 }], title: 'Total storage' }
 		]
 	};
-	readDirectoryAsync(documentDirectory).then(subFiles => {
-		console.log("Subdirs:" + JSON.stringify(subFiles));
-		for (var i = 0; i < subFiles.length; i++) {
-			getInfoAsync((documentDirectory + subFiles[i]), {size: true}).then(info => {
-				console.log("size: " + info.size + " bytes");
-				//TODO: Add all sizes, render
-			});
-		}
+	getDocumentSizes().then(returnUsedStorage => {
+		usedStorage = returnUsedStorage;
+		console.log("Used storage: " + usedStorage);
+		this.setState({usedStorageState: usedStorage});
 	});
 	getFreeDiskStorageAsync().then(freeDiskStorage => {
 		avalibleStorage = freeDiskStorage;
@@ -48,6 +71,7 @@ class ExpoConfigView extends React.Component {
 		console.log(totalStorage);
 		this.setState({totalStorageState: totalStorage});
 		this.setState({sections: [
+			{ data: [{ value: this.state.usedStorageState }], title: 'Stoarge used by articles' },
 			{ data: [{ value: this.state.avalibleStorageState }], title: 'Storage avalible' },
 			{ data: [{ value: this.state.totalStorageState }], title: 'Total storage' }
 		]});
