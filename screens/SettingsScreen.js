@@ -1,10 +1,11 @@
 import React from 'react';
 import * as FileSystem from 'expo-file-system';
-import { SectionList, Image, StyleSheet, Text, View } from 'react-native';
+import { Alert, SectionList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Constants from 'expo-constants';
 
 const {
 	cacheDirectory,
+	deleteAsync,
 	documentDirectory,
 	getFreeDiskStorageAsync,
 	getTotalDiskCapacityAsync,
@@ -16,53 +17,73 @@ var avalibleStorage = 0;
 var totalStorage = 0;
 var usedStorage = 0;
 
-async function getDocumentSizes(path): Promise<string> {
-	if (path == undefined) {
-		path = "";
-	}
-	readDirectoryAsync(documentDirectory + path).then(subFiles => {
-		console.log("Subdirs documentDirectory/" + path + "\n" + JSON.stringify(subFiles));
+class StorageView extends React.Component {
+  constructor(props) {
+	super(props);
+	this.state = { 
+		usedStorageState: "0 MB",
+		avalibleStorageState: "0 GB", 
+		totalStorageState: "0 GB",
+		sections: [
+			{ data: [{ value: 0 }], title: 'Storage used by articles' },
+			{ data: [{ value: 0 }], title: 'Storage available' },
+			{ data: [{ value: 0 }], title: 'Total storage' }
+		]
+	};
+	
+	readDirectoryAsync(documentDirectory).then(subFiles => {
+		console.log("Subdirs documentDirectory/\n" + JSON.stringify(subFiles));
+		var totalDocsFound = 0;
+		var totalDocsSized = 0;
 		for (var i = 0; i < subFiles.length; i++) {
 			if (subFiles[i].includes(".") == true) {
+				totalDocsFound++;
 				getInfoAsync((documentDirectory + subFiles[i]), {size: true}).then(info => {
+					totalDocsSized++;
 					console.log("Size: " + info.size + " bytes");
 					if (info.size != undefined) {
 						usedStorage += info.size;
 					}
+					if (totalDocsFound == totalDocsSized) {
+						usedStorage /= 1000000;
+						usedStorage = (usedStorage.toFixed(2) + " MB");
+						console.log("Total used storage: " + usedStorage);
+						this.setState({usedStorageState: usedStorage});
+						this.setState({sections: [
+							{ data: [{ value: this.state.usedStorageState }], title: 'Storage used by articles' },
+							{ data: [{ value: this.state.avalibleStorageState }], title: 'Storage available' },
+							{ data: [{ value: this.state.totalStorageState }], title: 'Total storage' }
+						]});
+					}
 				});
 			}
+		}
+		if (totalDocsFound == 0 && totalDocsSized == 0) {
+			usedStorage /= 1000000;
+			usedStorage = (usedStorage.toFixed(2) + " MB");
+			console.log("Total used storage: " + usedStorage);
+			this.setState({usedStorageState: usedStorage});
+			this.setState({sections: [
+				{ data: [{ value: this.state.usedStorageState }], title: 'Storage used by articles' },
+				{ data: [{ value: this.state.avalibleStorageState }], title: 'Storage available' },
+				{ data: [{ value: this.state.totalStorageState }], title: 'Total storage' }
+			]});
 		}
 	}).catch(e => {
 		console.warn("Error reading file size\n" + e);
 	});
-	console.log("Total used storage: " + usedStorage);
-	return usedStorage;
-}
-
-class ExpoConfigView extends React.Component {
-  constructor(props) {
-	super(props);
-	this.state = { 
-		usedStorageState: 0,
-		avalibleStorageState: 0, 
-		totalStorageState: 0,
-		sections: [
-			{ data: [{ value: 0 }], title: 'Stoarge used by articles' },
-			{ data: [{ value: 0 }], title: 'Storage avalible' },
-			{ data: [{ value: 0 }], title: 'Total storage' }
-		]
-	};
-	getDocumentSizes().then(returnUsedStorage => {
-		usedStorage = returnUsedStorage;
-		console.log("Used storage: " + usedStorage);
-		this.setState({usedStorageState: usedStorage});
-	});
+	
 	getFreeDiskStorageAsync().then(freeDiskStorage => {
 		avalibleStorage = freeDiskStorage;
 		avalibleStorage /= 1000000000;
 		avalibleStorage = (avalibleStorage.toFixed(2) + " GB");
 		console.log(avalibleStorage);
 		this.setState({avalibleStorageState: avalibleStorage});
+		this.setState({sections: [
+			{ data: [{ value: this.state.usedStorageState }], title: 'Storage used by articles' },
+			{ data: [{ value: this.state.avalibleStorageState }], title: 'Storage available' },
+			{ data: [{ value: this.state.totalStorageState }], title: 'Total storage' }
+		]});
 	});
 	getTotalDiskCapacityAsync().then(totalDiskCapacity => {
 		totalStorage = totalDiskCapacity;
@@ -71,8 +92,8 @@ class ExpoConfigView extends React.Component {
 		console.log(totalStorage);
 		this.setState({totalStorageState: totalStorage});
 		this.setState({sections: [
-			{ data: [{ value: this.state.usedStorageState }], title: 'Stoarge used by articles' },
-			{ data: [{ value: this.state.avalibleStorageState }], title: 'Storage avalible' },
+			{ data: [{ value: this.state.usedStorageState }], title: 'Storage used by articles' },
+			{ data: [{ value: this.state.avalibleStorageState }], title: 'Storage available' },
 			{ data: [{ value: this.state.totalStorageState }], title: 'Total storage' }
 		]});
 		console.log("Free storage: " + this.state.avalibleStorageState + ", Total storage: " + this.state.totalStorageState);
@@ -199,10 +220,48 @@ export default class SettingsScreen extends React.Component {
     title: 'app.json',
   };
 
+	_clearDownloads = () => {
+		Alert.alert(
+			'Clear Storage',
+			'This will delete all magazines locally downloaded and will cause them to be re-downloaded the next time you wish to view them. Are you sure?',
+			[{
+					text: 'Cancel',
+					onPress: () => {
+						console.log('Canceling storage clearing');
+						return;
+					},
+					style: 'cancel'
+				},
+				{
+					text: 'OK',
+					onPress: () => {
+						console.warn('Clearing downloaded documents');
+						readDirectoryAsync(documentDirectory).then(subFiles => {
+							for (var i = 0; i < subFiles.length; i++) {
+								if (subFiles[i].includes(".html") == true) {
+									console.log("Deleting " + (documentDirectory + subFiles[i]));
+									deleteAsync((documentDirectory + subFiles[i]));
+								}
+							}
+						});
+					}
+				},
+			], {
+				cancelable: false
+			}
+		)
+	}
+
   render() {
     return (
 		<View style={styles.container}>
-			<ExpoConfigView />
+			<StorageView />
+			<TouchableOpacity 
+				onPress={() => this._clearDownloads()} 
+				style={styles.button}
+			>
+				<Text style={styles.buttonText}>Clear Storage</Text>
+			</TouchableOpacity>
 		</View>
 	);
   }
@@ -271,4 +330,14 @@ const styles = StyleSheet.create({
   colorTextContainer: {
     flex: 1,
   },
+  button: {
+    backgroundColor: "blue",
+    padding: 20,
+    borderRadius: 5,
+  },
+  buttonText: {
+    fontSize: 20,
+    color: '#fff',
+	textAlign: 'center',
+  }, 
 });
