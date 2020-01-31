@@ -244,6 +244,14 @@ export default class SettingsScreen extends React.Component {
 								}
 							}
 						});
+						readDirectoryAsync(cacheDirectory).then(subFiles => {
+							for (var i = 0; i < subFiles.length; i++) {
+								if (subFiles[i].includes(".html") == true) {
+									console.log("Deleting " + (documentDirectory + subFiles[i]));
+									deleteAsync((documentDirectory + subFiles[i]));
+								}
+							}
+						});
 					}
 				},
 			], {
