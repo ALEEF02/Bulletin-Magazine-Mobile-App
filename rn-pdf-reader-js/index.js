@@ -65,8 +65,7 @@ async function checkPath() {
 		const { exists, md5, isDirectory, uri } = await getInfoAsync(storagePath, { md5: true });
 		//console.log("Exists: " + exists + " isDirectory: " + isDirectory + " uri: " + uri);
 	} catch (e) {
-		console.error("Directory error: " + e);
-		await makeDirectoryAsync(storagePath + magazineName);
+		console.warn("Directory error: " + e);
 	}
 }
 
@@ -74,9 +73,9 @@ async function writePDFAsync(base64: string) {
 	if (base64.startsWith('data:application/pdf;base64,')) {
 		console.log("Writing temp PDF to cache");
 		await writeAsStringAsync(pdfPath, base64.replace('data:application/pdf;base64,', ''), { encoding: FileSystem.EncodingType.Base64 });
-		const { exists: pdfPathExist, size: fileSize } = await getInfoAsync(pdfPath, {size: true});
+		const { exists: pdfPathExist, size: fileSize, md5 } = await getInfoAsync(pdfPath, {size: true, md5: true});
 		if (pdfPathExist && fileSize > 1000) {
-			console.log("Wrote PDF successfully to " + pdfPath + " with size of " + fileSize);
+			console.log("Wrote PDF successfully to " + pdfPath + " with size of " + fileSize + " and a hash of " + md5);
 		} else {
 			console.warn("PDF not written successfully! Exists: " + pdfPathExist + ", Size: " + fileSize);
 		}
@@ -115,12 +114,19 @@ export async function removeFilesAsync(): Promise < * > {
 
 export async function storePermanent(data:string, magazineName: string): Promise < * > {
 	let options = { encoding: FileSystem.EncodingType.Base64 };
+	//let options = { encoding: FileSystem.EncodingType.UTF8 };
 	
-	console.log("Storing '" + magazineName + "' at " + (storagePath + magazineName + ".html"));
-	console.log("base64: " + data.substring(0,100) + "...");
+	magazineName = magazineName.replace(/ /g, "_");
+	console.log("base64 to be stored: " + data.substring(0,100) + "...");
 	
 	try {
-		await writeAsStringAsync((storagePath + magazineName + ".html"), data, options);
+		if (Platform.OS !== 'ios') {
+			console.log("Storing '" + magazineName.replace(" ", "_") + "' at " + (storagePath + magazineName + ".html") + " for Android");
+			await writeAsStringAsync((storagePath + magazineName + ".html"), data, options);
+		} else {
+			console.log("Storing '" + magazineName + "' at " + (storagePath + magazineName + ".pdf") + " for iOS");
+			await writeAsStringAsync((storagePath + magazineName + ".pdf"), data, options);
+		}
 		return true;
 	} catch (e) {
 		console.warn("Article storage " + e);
@@ -129,10 +135,16 @@ export async function storePermanent(data:string, magazineName: string): Promise
 
 export async function readPermanent(magazineName: string): Promise < * > {
 	let options = { encoding: FileSystem.EncodingType.Base64 };
-	
+	//let options = { encoding: FileSystem.EncodingType.UTF8 };
+	magazineName = magazineName.replace(/ /g, "_");
 	try {
-		console.log("Reading '" + magazineName + "' at " + (storagePath + magazineName + ".html"));
-		return await readAsStringAsync((storagePath + magazineName + ".html"), options);
+		if (Platform.OS !== 'ios') {
+			console.log("Reading '" + magazineName + "' at " + (storagePath + magazineName + ".html") + " for Android");
+			return await readAsStringAsync((storagePath + magazineName + ".html"), options);
+		} else {
+			console.log("Reading '" + magazineName + "' at " + (storagePath + magazineName + ".pdf") + " for iOS");
+			return await readAsStringAsync((storagePath + magazineName + ".pdf"), options);
+		}
 	} catch (e) {
 		console.warn("Couldn't find article: " + e);
 	}
@@ -147,6 +159,7 @@ function readAsTextAsync(mediaBlob: Blob, magazineName: string): Promise < strin
 				if (typeof reader.result === 'string') {
 					try {
 						var trunk = reader.result.replace("data:application/pdf;base64,", "");
+						trunk = trunk.replace("data:application/octet-stream;base64,", "");
 						console.log("Storing article '" + magazineName + "' - " + trunk.substring(0,100) + "...");
 						storePermanent(trunk, magazineName).then((value) => {
 							if (value != undefined) {
@@ -254,14 +267,15 @@ class PdfReader extends Component < Props, State > {
 					source.uri.startsWith('content'))
 			) {
 				data = await fetchPdfAsync(source.uri, magName.name, true)
-				console.log("data prop created for iOS using downloaded data: " + data.substring(0,200));
+				console.log("data prop created for Android using downloaded data: " + data.substring(0,200));
 				ready = !!data
 			} else if (ios && source.base64) {
-				await writePDFAsync(source.base64);
-				data = pdfPath;
+				//await writePDFAsync(source.base64);
+				data = (storagePath + magName.name.replace(/ /g, "_") + ".pdf");
 				console.log("data prop created for iOS using cached data: " + data);
+				ready = true;
 			} else if (source.base64 && source.base64.startsWith('data')) {
-				console.log("base64 for Android: " + source.base64.substring(0,100) + "...");
+				console.log("data prop created for Android using cached data: " + source.base64.substring(0,100) + "...");
 				data = source.base64
 				ready = true
 			} else if (ios) {
@@ -269,9 +283,10 @@ class PdfReader extends Component < Props, State > {
 				await writePDFAsync(await fetchPdfAsync(source.uri, magName.name, false));
 				data = pdfPath;
 				console.log("data prop created for iOS using downloaded data at: " + data);
+				ready = true;
 				//data = source.uri
 			} else {
-				console.error('source props is not correct')
+				console.error('Source prop is malformed! ' + source)
 				return
 			}
 
@@ -294,7 +309,7 @@ class PdfReader extends Component < Props, State > {
 
 	componentDidMount() {
 		console.log("Created PdfReader instance");
-		checkPath();
+		//checkPath();
 		this.init()
 	}
 
@@ -307,22 +322,20 @@ class PdfReader extends Component < Props, State > {
 		const { style } = this.props
 
 		if (data && ios) {
-			console.log("Rendering iOS...\n" + data);
+			console.log("Rendering iOS...\n" + data + "\n" + typeof data);
 			return (
 				<View style={[styles.container, style]}>
 					{!ready && <Loader />}
 					<WebView
 						onLoad={()=>this.setState({ready: true})}
-						originWhitelist={['http://*', 'https://*', 'file://*', 'data:*', "*"]}
-						allowingReadAccessToURL={true}
+						onError={(e)=>console.error("WebView" + e)}
+						originWhitelist={['http://*', 'https://*', 'file://*', 'data:*']}
+						allowingReadAccessToURL={undefined}
 						style={styles.webview}
-						allowFileAccess={true}
-						allowContentAccess={true}
+						sharedCookiesEnabled={false}
+						startInLoadingState={true}
 						allowFileAccessFromFileURLs={true}
-						allowUniversalAccessFromFileURLs={true}
-						domStorageEnabled={true}
-						mixedContentMode="always"
-						source={{ uri: data }}
+						source={{ uri: this.state.data }}
 					/>
 				</View>
 			)
@@ -348,7 +361,7 @@ class PdfReader extends Component < Props, State > {
 			)
 		}
 
-		return <Loader />
+		return !ready && <Loader />
 	}
 }
 

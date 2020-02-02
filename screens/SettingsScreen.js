@@ -55,6 +55,8 @@ class StorageView extends React.Component {
 							{ data: [{ value: this.state.totalStorageState }], title: 'Total storage' }
 						]});
 					}
+				}).catch(e => {
+					console.warn("Error reading file size\n" + e);
 				});
 			}
 		}
@@ -238,7 +240,7 @@ export default class SettingsScreen extends React.Component {
 						console.warn('Clearing downloaded documents');
 						readDirectoryAsync(documentDirectory).then(subFiles => {
 							for (var i = 0; i < subFiles.length; i++) {
-								if (subFiles[i].includes(".html") == true) {
+								if (subFiles[i].includes(".html") == true || subFiles[i].includes(".pdf") == true) {
 									console.log("Deleting " + (documentDirectory + subFiles[i]));
 									deleteAsync((documentDirectory + subFiles[i]));
 								}
@@ -246,7 +248,7 @@ export default class SettingsScreen extends React.Component {
 						});
 						readDirectoryAsync(cacheDirectory).then(subFiles => {
 							for (var i = 0; i < subFiles.length; i++) {
-								if (subFiles[i].includes(".html") == true) {
+								if (subFiles[i].includes(".html") == true || subFiles[i].includes(".pdf") == true) {
 									console.log("Deleting " + (documentDirectory + subFiles[i]));
 									deleteAsync((documentDirectory + subFiles[i]));
 								}

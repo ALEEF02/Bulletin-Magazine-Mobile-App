@@ -98,10 +98,15 @@ class PDF extends React.Component {
 				console.log("Searching for '" + magShortName + "'");
 				
 				readPermanent(magShortName).then((value) => {
-					console.log("readPermanent return: " + value);
+					//console.log("readPermanent return: " + value);
 					if (value !== false) {
-						console.log("Found magazine in local data: " + value.substring(0,10));
-						this.setState({base64: ("data:application/pdf;base64," + value)});
+						console.log("Found magazine in local data: " + value.substring(0,100));
+						const ios = Platform.OS === 'ios'
+						if (ios) {
+							this.setState({base64: ("data:application/pdf;base64," + value)});
+						} else {
+							this.setState({base64: value});
+						}
 					} else {
 						console.log("Did not find magazine in local data");
 						currentMag.getDownloadURL().then((uri)=> {
@@ -117,7 +122,7 @@ class PDF extends React.Component {
 
     render() {
 		if (this.state.uri != "" || this.state.base64 != "") {
-			console.log("URI: '" + this.state.uri + "' Base64: '" + this.state.base64 + "' currentMag: " + currentMag + " magShortName: " + magShortName);
+			console.log("URI: '" + this.state.uri + "' Base64: '" + this.state.base64.substring(0,100) + "' currentMag: " + currentMag + " magShortName: " + magShortName);
 		}
 		return (
 			<View style={styles.container}>
