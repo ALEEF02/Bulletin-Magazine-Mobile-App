@@ -237,7 +237,7 @@ export default class SettingsScreen extends React.Component {
 				{
 					text: 'OK',
 					onPress: () => {
-						console.warn('Clearing downloaded documents');
+						console.log('Clearing downloaded documents');
 						readDirectoryAsync(documentDirectory).then(subFiles => {
 							for (var i = 0; i < subFiles.length; i++) {
 								if (subFiles[i].includes(".html") == true || subFiles[i].includes(".pdf") == true) {

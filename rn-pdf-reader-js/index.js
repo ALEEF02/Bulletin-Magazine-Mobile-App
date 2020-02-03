@@ -60,7 +60,6 @@ const htmlPath = `${cacheDirectory}index.html`;
 const pdfPath = `${cacheDirectory}file.pdf`;
 
 async function checkPath() {
-	//console.log("Checking and correcting path");
 	try {
 		const { exists, md5, isDirectory, uri } = await getInfoAsync(storagePath, { md5: true });
 		//console.log("Exists: " + exists + " isDirectory: " + isDirectory + " uri: " + uri);
@@ -84,14 +83,17 @@ async function writePDFAsync(base64: string) {
 	}
 }
 
-async function writeWebViewReaderFileAsync(data: string, magazineName: string): Promise < * > {
+async function writeWebViewReaderFileAsync(data: string, magazineName: string, firstWrite: boolean): Promise < * > {
+	console.log("Writing temp HTML for Android to cache");
 	const { exist, md5 } = await getInfoAsync(bundleJsPath, { md5: true })
 	const bundleContainer = require('./bundleContainer')
 	if (!exist || bundleContainer.getBundleMd5() !== md5) {
 		await writeAsStringAsync(bundleJsPath, bundleContainer.getBundle())
 	}
 	await writeAsStringAsync(htmlPath, viewerHtml(data))
-	await storePermanent(data, magazineName)
+	if (firstWrite) {
+		await storePermanent(data, magazineName)
+	}
 }
 
 export async function removeFilesAsync(): Promise < * > {
@@ -113,17 +115,16 @@ export async function removeFilesAsync(): Promise < * > {
 }
 
 export async function storePermanent(data:string, magazineName: string): Promise < * > {
-	let options = { encoding: FileSystem.EncodingType.Base64 };
-	//let options = { encoding: FileSystem.EncodingType.UTF8 };
-	
 	magazineName = magazineName.replace(/ /g, "_");
 	console.log("base64 to be stored: " + data.substring(0,100) + "...");
 	
 	try {
 		if (Platform.OS !== 'ios') {
+			let options = { encoding: FileSystem.EncodingType.UTF8 };
 			console.log("Storing '" + magazineName.replace(" ", "_") + "' at " + (storagePath + magazineName + ".html") + " for Android");
 			await writeAsStringAsync((storagePath + magazineName + ".html"), data, options);
 		} else {
+			let options = { encoding: FileSystem.EncodingType.Base64 };
 			console.log("Storing '" + magazineName + "' at " + (storagePath + magazineName + ".pdf") + " for iOS");
 			await writeAsStringAsync((storagePath + magazineName + ".pdf"), data, options);
 		}
@@ -133,20 +134,20 @@ export async function storePermanent(data:string, magazineName: string): Promise
 	}
 }
 
-export async function readPermanent(magazineName: string): Promise < * > {
-	let options = { encoding: FileSystem.EncodingType.Base64 };
-	//let options = { encoding: FileSystem.EncodingType.UTF8 };
+export async function readPermanent(magazineName: string): Promise < * > {	
 	magazineName = magazineName.replace(/ /g, "_");
 	try {
 		if (Platform.OS !== 'ios') {
+			let options = { encoding: FileSystem.EncodingType.UTF8 };
 			console.log("Reading '" + magazineName + "' at " + (storagePath + magazineName + ".html") + " for Android");
 			return await readAsStringAsync((storagePath + magazineName + ".html"), options);
 		} else {
+			let options = { encoding: FileSystem.EncodingType.Base64 };
 			console.log("Reading '" + magazineName + "' at " + (storagePath + magazineName + ".pdf") + " for iOS");
 			return await readAsStringAsync((storagePath + magazineName + ".pdf"), options);
 		}
 	} catch (e) {
-		console.warn("Couldn't find article: " + e);
+		console.log("Couldn't find article: " + e);
 	}
 	return false;
 }
@@ -286,12 +287,14 @@ class PdfReader extends Component < Props, State > {
 				ready = true;
 				//data = source.uri
 			} else {
-				console.error('Source prop is malformed! ' + source)
+				console.error('Source prop is malformed! ' + JSON.stringify(source))
 				return
 			}
 
-			if (android) {
-				await writeWebViewReaderFileAsync(data, magName.name)
+			if (android && source.uri) {
+				await writeWebViewReaderFileAsync(data, magName.name, true)
+			} else if (android) {
+				await writeWebViewReaderFileAsync(data, magName.name, false)
 			}
 
 			if (onLoad && ready === true) {
@@ -308,7 +311,7 @@ class PdfReader extends Component < Props, State > {
 	}
 
 	componentDidMount() {
-		console.log("Created PdfReader instance");
+		//console.log("Created PdfReader instance");
 		//checkPath();
 		this.init()
 	}

@@ -161,7 +161,7 @@ class SectionListItem extends React.Component {
 	
 	//When an article is clicked
 	_openArticle = (articleName) => {
-		console.log('Clicked ' + articleName);
+		//console.log('Clicked ' + articleName);
 		currentMag = storageRef.child(articleName);
 		magShortName = articleName.replace(".", "");
 		//Set the currentMag to the corresponding article
