@@ -155,12 +155,12 @@ const ListHeader = () => {
           {manifest.name}
         </Text>
 
-        <Text style={styles.slugText} numberOfLines={1}>
-          {manifest.slug}
-        </Text>
-
         <Text style={styles.descriptionText}>
           {manifest.description}
+        </Text>
+
+        <Text style={styles.slugText} numberOfLines={1}>
+          Made for El Toro High School by Anthony Ford
         </Text>
       </View>
     </View>
@@ -219,7 +219,7 @@ const Color = ({ value }) => {
 
 export default class SettingsScreen extends React.Component {
   static navigationOptions = {
-    title: 'app.json',
+    title: 'Settings',
   };
 
 	_clearDownloads = () => {
@@ -317,12 +317,12 @@ const styles = StyleSheet.create({
   },
   slugText: {
     color: '#a39f9f',
-    fontSize: 14,
+    marginTop: 6,
+    fontSize: 12,
     backgroundColor: 'transparent',
   },
   descriptionText: {
     fontSize: 14,
-    marginTop: 6,
     color: '#4d4d4d',
   },
   colorContainer: {

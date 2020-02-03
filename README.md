@@ -14,7 +14,7 @@ Made for ETHS by Anthony Ford (ALEEF02)
 2) Click the blue 'Upload File' button
 3) Select your PDF
 4) Go to https://console.firebase.google.com/u/0/project/bulletin-magazine/database/bulletin-magazine/data/articles using the school account.
-5) Hover over articles and click the "+"
+5) Hover over articles and click the "+"  
 ![First Add Child](/readme/add1.PNG)
 6) In the name box, enter the next number of the article (up one from the previous)
 ![Name the listing](/readme/add2.PNG)
