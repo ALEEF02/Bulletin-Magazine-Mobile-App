@@ -1,6 +1,6 @@
 import React from 'react';
 import * as FileSystem from 'expo-file-system';
-import { Alert, SectionList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, SectionList, Image,	SafeAreaView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { NavigationEvents } from 'react-navigation';
 import Constants from 'expo-constants';
 
@@ -50,7 +50,6 @@ class StorageView extends React.Component {
 	var avalibleStorage = 0;
 	var totalStorage = 0;
 	var usedStorage = 0;
-
 	readDirectoryAsync(documentDirectory).then(subFiles => {
 		console.log("Subdirs documentDirectory/\n" + JSON.stringify(subFiles));
 		var totalDocsFound = 0;
@@ -235,10 +234,6 @@ export default class SettingsScreen extends React.Component {
 		this.child = React.createRef();
 	}
 	
-	componentDidMount() {
-		this.updateDisplay();
-	}
-	
 	updateDisplay = () => {
 		this.child._updateStorageDisplay();
 	};
@@ -286,18 +281,20 @@ export default class SettingsScreen extends React.Component {
 
   render() {
     return (
-		<View style={styles.container}>
-			<NavigationEvents
-				onDidFocus={payload => this.updateDisplay()}
-			/>
-			<StorageView ref={instance => { this.child = instance; }}/>
-			<TouchableOpacity 
-				onPress={() => this._clearDownloads()} 
-				style={styles.button}
-			>
-				<Text style={styles.buttonText}>Clear Storage</Text>
-			</TouchableOpacity>
-		</View>
+		<SafeAreaView style={styles.safeArea}>
+			<View style={styles.container}>
+				<NavigationEvents
+					onDidFocus={payload => this.updateDisplay()}
+				/>
+				<StorageView ref={instance => { this.child = instance; }}/>
+				<TouchableOpacity 
+					onPress={() => this._clearDownloads()} 
+					style={styles.button}
+				>
+					<Text style={styles.buttonText}>Clear Storage</Text>
+				</TouchableOpacity>
+			</View>
+		</SafeAreaView>
 	);
   }
 }
@@ -306,6 +303,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+  },
+  safeArea: {
+	flex: 1,
+	backgroundColor: '#000'
   },
   titleContainer: {
     paddingHorizontal: 15,

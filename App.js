@@ -1,5 +1,6 @@
 import React from 'react';
 import { Platform, StatusBar, StyleSheet, View } from 'react-native';
+import { AppearanceProvider } from 'react-native-appearance';
 import { AppLoading } from 'expo';
 import * as Icon from '@expo/vector-icons';
 import * as Font from 'expo-font';
@@ -24,7 +25,9 @@ export default class App extends React.Component {
       return (
         <View style={styles.container}>
           {Platform.OS === 'ios' && <StatusBar barStyle="default" />}
-          <AppNavigator />
+		  <AppearanceProvider>
+			<AppNavigator />
+		  </AppearanceProvider>
         </View>
       );
     }
