@@ -417,10 +417,6 @@ export default class HomeScreen extends React.Component {
 		};
 	}
 
-	setModalVisible(visible) {
-		this.setState({ modalVisible: visible });
-	}
-
 	render() {
 		return (
 			<SafeAreaView style={styles.container}>

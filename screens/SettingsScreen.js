@@ -1,6 +1,7 @@
 import React from 'react';
 import * as FileSystem from 'expo-file-system';
 import { Alert, SectionList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { NavigationEvents } from 'react-navigation';
 import Constants from 'expo-constants';
 
 const {
@@ -12,10 +13,6 @@ const {
 	getInfoAsync,
 	readDirectoryAsync
 } = FileSystem
-
-var avalibleStorage = 0;
-var totalStorage = 0;
-var usedStorage = 0;
 
 class StorageView extends React.Component {
   constructor(props) {
@@ -30,7 +27,30 @@ class StorageView extends React.Component {
 			{ data: [{ value: 0 }], title: 'Total storage' }
 		]
 	};
-	
+  }
+  
+  render() {
+
+    return (
+		this.state.sections[1].data.value != 0 ? <SectionList
+			style={styles.container}
+			renderItem={this._renderItem}
+			renderSectionHeader={this._renderSectionHeader}
+			stickySectionHeadersEnabled={true}
+			keyExtractor={(item, index) => item.title}
+			ListHeaderComponent={ListHeader}
+			sections={this.state.sections}
+		/> : 
+		<Text>Loading...</Text>
+    );
+  }
+  
+  _updateStorageDisplay = () => {
+	console.log("Updating storage display");
+	var avalibleStorage = 0;
+	var totalStorage = 0;
+	var usedStorage = 0;
+
 	readDirectoryAsync(documentDirectory).then(subFiles => {
 		console.log("Subdirs documentDirectory/\n" + JSON.stringify(subFiles));
 		var totalDocsFound = 0;
@@ -101,22 +121,6 @@ class StorageView extends React.Component {
 		console.log("Free storage: " + this.state.avalibleStorageState + ", Total storage: " + this.state.totalStorageState);
 	});
   }
-  
-  render() {
-
-    return (
-		this.state.sections[1].data.value != 0 ? <SectionList
-			style={styles.container}
-			renderItem={this._renderItem}
-			renderSectionHeader={this._renderSectionHeader}
-			stickySectionHeadersEnabled={true}
-			keyExtractor={(item, index) => item.title}
-			ListHeaderComponent={ListHeader}
-			sections={this.state.sections}
-		/> : 
-		<Text>Loading...</Text>
-    );
-  }
 
   _renderSectionHeader = ({ section }) => {
     return <SectionHeader title={section.title} />;
@@ -160,7 +164,11 @@ const ListHeader = () => {
         </Text>
 
         <Text style={styles.slugText} numberOfLines={1}>
-          Made for El Toro High School by Anthony Ford
+          Made for El Toro High School
+        </Text>
+		
+		<Text style={styles.slugText} numberOfLines={1}>
+		  by Anthony Ford
         </Text>
       </View>
     </View>
@@ -218,9 +226,22 @@ const Color = ({ value }) => {
 };
 
 export default class SettingsScreen extends React.Component {
-  static navigationOptions = {
-    title: 'Settings',
-  };
+	static navigationOptions = {
+		title: 'Settings',
+	};
+	
+	constructor(props) {
+		super(props);
+		this.child = React.createRef();
+	}
+	
+	componentDidMount() {
+		this.updateDisplay();
+	}
+	
+	updateDisplay = () => {
+		this.child._updateStorageDisplay();
+	};
 
 	_clearDownloads = () => {
 		Alert.alert(
@@ -254,6 +275,7 @@ export default class SettingsScreen extends React.Component {
 								}
 							}
 						});
+						this.updateDisplay();
 					}
 				},
 			], {
@@ -265,7 +287,10 @@ export default class SettingsScreen extends React.Component {
   render() {
     return (
 		<View style={styles.container}>
-			<StorageView />
+			<NavigationEvents
+				onDidFocus={payload => this.updateDisplay()}
+			/>
+			<StorageView ref={instance => { this.child = instance; }}/>
 			<TouchableOpacity 
 				onPress={() => this._clearDownloads()} 
 				style={styles.button}
@@ -317,12 +342,12 @@ const styles = StyleSheet.create({
   },
   slugText: {
     color: '#a39f9f',
-    marginTop: 6,
-    fontSize: 12,
+    fontSize: 14,
     backgroundColor: 'transparent',
   },
   descriptionText: {
     fontSize: 14,
+    marginBottom: 6,
     color: '#4d4d4d',
   },
   colorContainer: {
