@@ -6,6 +6,9 @@ import {
 	ActivityIndicator,
 	Platform,
 	StyleSheet,
+	ProgressViewIOS,
+	ProgressBarAndroid,
+	Text,
 } from 'react-native'
 import { WebView } from "react-native-webview";
 import * as FileSystem from 'expo-file-system'
@@ -152,10 +155,10 @@ export async function readPermanent(magazineName: string): Promise < * > {
 	return false;
 }
 
+var reader = new FileReader()
 function readAsTextAsync(mediaBlob: Blob, magazineName: string): Promise < string > {
 	return new Promise((resolve, reject) => {
 		try {
-			const reader = new FileReader()
 			reader.onloadend = e => {
 				if (typeof reader.result === 'string') {
 					try {
@@ -195,9 +198,9 @@ async function fetchPdfAsync(url: string, currentMagName: string, isAndroid: boo
 	return readAsTextAsync(mediaBlob, currentMagName)
 }
 
+var xhr = new XMLHttpRequest()
 async function urlToBlob(url) {
 	return new Promise((resolve, reject) => {
-		var xhr = new XMLHttpRequest()
 		xhr.onerror = reject
 		xhr.onreadystatechange = () => {
 			if (xhr.readyState === 4) {
@@ -209,12 +212,6 @@ async function urlToBlob(url) {
 		xhr.send()
 	})
 }
-
-const Loader = () => (
-	<View style={{ flex: 1, justifyContent: 'center' }}>
-    <ActivityIndicator size="large" />
-  </View>
-)
 
 const styles = StyleSheet.create({
 	container: {
@@ -247,7 +244,17 @@ type State = {
 }
 
 class PdfReader extends Component < Props, State > {
-	state = { ready: false, android: false, ios: false, data: undefined, renderedOnce: false }
+	state = { ready: false, android: false, ios: false, data: undefined, renderedOnce: false, progressValue: 0.0}
+
+	constructor(props) {
+		super(props);
+		
+		function updateLoader(e) {
+			this.setState({ progressValue: (e.loaded / e.total) })
+		}
+			
+		this.updateLoader = this.updateLoader.bind(this);
+	}
 
 	async init() {
 		const { onLoad } = this.props;
@@ -267,6 +274,12 @@ class PdfReader extends Component < Props, State > {
 					source.uri.startsWith('file') ||
 					source.uri.startsWith('content'))
 			) {
+				console.log("Downloading " + magName.name + " from internet for Android");
+				
+				reader = new FileReader()
+				xhr = new XMLHttpRequest()
+				xhr.addEventListener('progress', updateLoader);
+				
 				data = await fetchPdfAsync(source.uri, magName.name, true)
 				console.log("data prop created for Android using downloaded data: " + data.substring(0,200));
 				ready = !!data
@@ -281,6 +294,11 @@ class PdfReader extends Component < Props, State > {
 				ready = true
 			} else if (ios) {
 				console.log("Downloading " + magName.name + " from internet for iOS");
+				
+				reader = new FileReader()
+				xhr = new XMLHttpRequest()
+				xhr.addEventListener('progress', updateLoader);
+				
 				await writePDFAsync(await fetchPdfAsync(source.uri, magName.name, false));
 				data = pdfPath;
 				console.log("data prop created for iOS using downloaded data at: " + data);
@@ -323,6 +341,19 @@ class PdfReader extends Component < Props, State > {
 	render() {
 		const { ready, data, ios, android, renderedOnce } = this.state
 		const { style } = this.props
+		const Loader = () => (
+			<View style={{ flex: 1, justifyContent: 'center' }}>
+				<ActivityIndicator size="large" />
+				<Text style = {{fontSize: 20, color: '#000'}}> Progress Value: { parseFloat((this.state.progressValue * 100).toFixed(3))} %</Text>
+				{
+					( android )
+					?
+					  ( <ProgressBarAndroid styleAttr = "Horizontal" progress = { this.state.progressValue } indeterminate = { false } /> )
+					:
+					  ( <ProgressViewIOS progress = { this.state.progressValue } /> )
+				}
+			</View>
+		)
 
 		if (data && ios) {
 			console.log("Rendering iOS...\n" + data + "\n" + typeof data);
