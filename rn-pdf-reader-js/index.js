@@ -156,38 +156,34 @@ export async function readPermanent(magazineName: string): Promise < * > {
 }
 
 var reader = new FileReader()
-function readAsTextAsync(mediaBlob: Blob, magazineName: string): Promise < string > {
+async function readAsTextAsync(mediaBlob: Blob, magazineName: string) {
 	return new Promise((resolve, reject) => {
-		try {
-			reader.onloadend = e => {
-				if (typeof reader.result === 'string') {
-					try {
-						var trunk = reader.result.replace("data:application/pdf;base64,", "");
-						trunk = trunk.replace("data:application/octet-stream;base64,", "");
-						console.log("Storing article '" + magazineName + "' - " + trunk.substring(0,100) + "...");
-						storePermanent(trunk, magazineName).then((value) => {
-							if (value != undefined) {
-								console.log("Successfully stored article to the filesystem: " + value);
-							} else {
-								console.warn("storePermanent returned undefined!");
-							}
-						});
-					} catch (error) {
-						console.warn("Error saving article: " + error);
-					}
-					return resolve(reader.result)
+		reader.onloadend = e => {
+			if (typeof reader.result === 'string') {
+				try {
+					var trunk = reader.result.replace("data:application/pdf;base64,", "");
+					trunk = trunk.replace("data:application/octet-stream;base64,", "");
+					console.log("Storing article '" + magazineName + "' - " + trunk.substring(0,100) + "...");
+					storePermanent(trunk, magazineName).then((value) => {
+						if (value != undefined) {
+							console.log("Successfully stored article to the filesystem: " + value);
+						} else {
+							console.warn("storePermanent returned undefined!");
+						}
+					});
+				} catch (error) {
+					console.warn("Error saving article: " + error);
 				}
-				return reject(
-					`Unable to get result of file due to bad type, waiting string and getting ${typeof reader.result}.`,
-				)
+				return resolve(reader.result)
 			}
-			reader.onerror = e => {
-				console.warn("File reader error: " + e);
-			}
-			reader.readAsDataURL(mediaBlob)
-		} catch (error) {
-			reject(error)
+			return reject(
+				`Unable to get result of file due to bad type, waiting string and getting ${typeof reader.result}.`,
+			)
 		}
+		reader.onerror = e => {
+			console.warn("File reader error: " + e);
+		}
+		reader.readAsDataURL(mediaBlob)
 	})
 }
 
@@ -195,7 +191,8 @@ async function fetchPdfAsync(url: string, currentMagName: string, isAndroid: boo
 	console.log('Getting blob for ' + url);
 	const mediaBlob = await urlToBlob(url);
 	console.log('Calling readAsTextAsync with ' + JSON.stringify(mediaBlob).substring(0,50) + ' and ' + currentMagName);
-	return readAsTextAsync(mediaBlob, currentMagName)
+	const readRt = await readAsTextAsync(mediaBlob, currentMagName);
+	return readRt;
 }
 
 var xhr = new XMLHttpRequest()
@@ -248,12 +245,18 @@ class PdfReader extends Component < Props, State > {
 
 	constructor(props) {
 		super(props);
-		
-		function updateLoader(e) {
-			this.setState({ progressValue: (e.loaded / e.total) })
-		}
-			
-		this.updateLoader = this.updateLoader.bind(this);
+		this.updateLoaderReadText = this.updateLoaderReadText.bind(this);
+		this.updateLoaderBlob = this.updateLoaderBlob.bind(this);
+	}
+
+	updateLoaderBlob(e) {
+		console.log("loading blob: " + e.loaded);
+		this.setState({ progressValue: (e.loaded / (e.total * 3)) })
+	}
+	
+	updateLoaderReadText(e) {
+		console.log("loading read: " + e.loaded);
+		this.setState({ progressValue: ((e.loaded + e.total) / (e.total * 3)) })
 	}
 
 	async init() {
@@ -278,13 +281,13 @@ class PdfReader extends Component < Props, State > {
 				
 				reader = new FileReader()
 				xhr = new XMLHttpRequest()
-				xhr.addEventListener('progress', updateLoader);
+				xhr.addEventListener('progress', this.updateLoaderBlob);
+				reader.addEventListener('progress', this.updateLoaderReadText);
 				
 				data = await fetchPdfAsync(source.uri, magName.name, true)
 				console.log("data prop created for Android using downloaded data: " + data.substring(0,200));
 				ready = !!data
 			} else if (ios && source.base64) {
-				//await writePDFAsync(source.base64);
 				data = (storagePath + magName.name.replace(/ /g, "_") + ".pdf");
 				console.log("data prop created for iOS using cached data: " + data);
 				ready = true;
@@ -297,7 +300,8 @@ class PdfReader extends Component < Props, State > {
 				
 				reader = new FileReader()
 				xhr = new XMLHttpRequest()
-				xhr.addEventListener('progress', updateLoader);
+				xhr.addEventListener('progress', this.updateLoaderBlob);
+				reader.addEventListener('progress', this.updateLoaderReadText);
 				
 				await writePDFAsync(await fetchPdfAsync(source.uri, magName.name, false));
 				data = pdfPath;
