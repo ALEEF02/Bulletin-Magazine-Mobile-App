@@ -183,6 +183,9 @@ async function readAsTextAsync(mediaBlob: Blob, magazineName: string) {
 		reader.onerror = e => {
 			console.warn("File reader error: " + e);
 		}
+		reader.onprogress = e => {
+			console.warn("File reader prog: " + e);
+		}
 		reader.readAsDataURL(mediaBlob)
 	})
 }
@@ -247,6 +250,7 @@ class PdfReader extends Component < Props, State > {
 		super(props);
 		this.updateLoaderReadText = this.updateLoaderReadText.bind(this);
 		this.updateLoaderBlob = this.updateLoaderBlob.bind(this);
+		this.stopDownload = this.stopDownload.bind(this);
 	}
 
 	updateLoaderBlob(e) {
@@ -257,6 +261,12 @@ class PdfReader extends Component < Props, State > {
 	updateLoaderReadText(e) {
 		console.log("loading read: " + e.loaded);
 		this.setState({ progressValue: ((e.loaded + e.total) / (e.total * 3)) })
+	}
+	
+	stopDownload() {
+		console.warn("Stopping article download");
+		xhr.abort();
+		reader.abort();
 	}
 
 	async init() {
@@ -327,7 +337,6 @@ class PdfReader extends Component < Props, State > {
 			this.setState({ renderedOnce: true })
 		} catch (error) {
 			alert('Sorry, an error occurred.')
-			console.error(error)
 			console.log("Error: " + error)
 		}
 	}
@@ -339,6 +348,7 @@ class PdfReader extends Component < Props, State > {
 	}
 
 	componentWillUnmount() {
+		console.log("Unmounting PdfReader");
 		removeFilesAsync()
 	}
 

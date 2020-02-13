@@ -148,6 +148,7 @@ class SectionListItem extends React.Component {
 	}
 
 	setModalVisible(visible) {
+		console.log("Setting modal to " + visible);
 		this.setState({ modalVisible: visible });
 	}
 
@@ -156,6 +157,8 @@ class SectionListItem extends React.Component {
 	}
 
 	resetModal() {
+		const pdfReader = new PDFReader();
+		pdfReader.stopDownload();
 		this.setState({ openArticle: false });
 	}
 	
