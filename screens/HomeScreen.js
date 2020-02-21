@@ -157,7 +157,9 @@ class SectionListItem extends React.Component {
 
 	resetModal() {
 		const pdfReader = new PDFReader();
+		//TODO: Handle stopping download ONLY when still downloading
 		console.log(pdfReader.state.renderedOnce);
+		
 		pdfReader.stopDownload();
 		this.setState({ openArticle: false });
 	}
