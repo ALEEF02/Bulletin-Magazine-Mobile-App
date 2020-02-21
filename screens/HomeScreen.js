@@ -2,7 +2,6 @@
 import React from 'react';
 import Touchable from 'react-native-platform-touchable';
 import {
-	AsyncStorage,
 	Dimensions,
 	Image,
 	InteractionManager,
@@ -158,6 +157,7 @@ class SectionListItem extends React.Component {
 
 	resetModal() {
 		const pdfReader = new PDFReader();
+		console.log(pdfReader.state.renderedOnce);
 		pdfReader.stopDownload();
 		this.setState({ openArticle: false });
 	}

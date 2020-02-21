@@ -1,7 +1,6 @@
 // @flow
 import React, { Component } from 'react'
 import {
-	AsyncStorage,
 	View,
 	ActivityIndicator,
 	Platform,
@@ -75,6 +74,12 @@ async function writePDFAsync(base64: string) {
 	if (base64.startsWith('data:application/pdf;base64,')) {
 		console.log("Writing temp PDF to cache");
 		await writeAsStringAsync(pdfPath, base64.replace('data:application/pdf;base64,', ''), { encoding: FileSystem.EncodingType.Base64 });
+		//[Violation] 'message' handler took xxxms
+		//Crashes app shortly after
+		//Only occurs on the larger 2 PDFs
+		//Most likely caused by simultaneous writes to permanent and cache storage
+		
+		console.log("Attempted to write PDF. Checking validity...");
 		const { exists: pdfPathExist, size: fileSize, md5 } = await getInfoAsync(pdfPath, {size: true, md5: true});
 		if (pdfPathExist && fileSize > 1000) {
 			console.log("Wrote PDF successfully to " + pdfPath + " with size of " + fileSize + " and a hash of " + md5);
@@ -292,7 +297,7 @@ class PdfReader extends Component < Props, State > {
 				reader = new FileReader()
 				xhr = new XMLHttpRequest()
 				xhr.addEventListener('progress', this.updateLoaderBlob);
-				reader.addEventListener('progress', this.updateLoaderReadText);
+				//reader.addEventListener('progress', this.updateLoaderReadText);
 				
 				data = await fetchPdfAsync(source.uri, magName.name, true)
 				console.log("data prop created for Android using downloaded data: " + data.substring(0,200));
@@ -311,13 +316,12 @@ class PdfReader extends Component < Props, State > {
 				reader = new FileReader()
 				xhr = new XMLHttpRequest()
 				xhr.addEventListener('progress', this.updateLoaderBlob);
-				reader.addEventListener('progress', this.updateLoaderReadText);
+				//reader.addEventListener('progress', this.updateLoaderReadText);
 				
 				await writePDFAsync(await fetchPdfAsync(source.uri, magName.name, false));
 				data = pdfPath;
 				console.log("data prop created for iOS using downloaded data at: " + data);
 				ready = true;
-				//data = source.uri
 			} else {
 				console.error('Source prop is malformed! ' + JSON.stringify(source))
 				return
