@@ -61,17 +61,8 @@ var storagePath = FileSystem.documentDirectory;
 const htmlPath = `${cacheDirectory}index.html`;
 const pdfPath = `${cacheDirectory}file.pdf`;
 
-async function checkPath() {
-	try {
-		const { exists, md5, isDirectory, uri } = await getInfoAsync(storagePath, { md5: true });
-		//console.log("Exists: " + exists + " isDirectory: " + isDirectory + " uri: " + uri);
-	} catch (e) {
-		console.warn("Directory error: " + e);
-	}
-}
-
 async function writePDFAsync(base64: string) {
-	if (base64.startsWith('data:application/pdf;base64,')) {
+	if (base64 != null && base64.startsWith('data:application/pdf;base64,')) {
 		console.log("Writing temp PDF to cache");
 		await writeAsStringAsync(pdfPath, base64.replace('data:application/pdf;base64,', ''), { encoding: FileSystem.EncodingType.Base64 });
 		//[Violation] 'message' handler took xxxms
@@ -83,11 +74,14 @@ async function writePDFAsync(base64: string) {
 		const { exists: pdfPathExist, size: fileSize, md5 } = await getInfoAsync(pdfPath, {size: true, md5: true});
 		if (pdfPathExist && fileSize > 1000) {
 			console.log("Wrote PDF successfully to " + pdfPath + " with size of " + fileSize + " and a hash of " + md5);
+			return true;
 		} else {
 			console.warn("PDF not written successfully! Exists: " + pdfPathExist + ", Size: " + fileSize);
+			return false;
 		}
 	} else {
-		console.warn("base64 passed to writePDFAsync is malformed! Input: " + base64.substring(0,100) + "...");
+		console.warn("base64 passed to writePDFAsync is malformed! Input: " + base64 + "...");
+		return false;
 	}
 }
 
@@ -179,14 +173,15 @@ async function readAsTextAsync(mediaBlob: Blob, magazineName: string) {
 				} catch (error) {
 					console.warn("Error saving article: " + error);
 				}
-				return resolve(reader.result)
+				resolve(reader.result)
 			}
 			return reject(
 				`Unable to get result of file due to bad type, waiting string and getting ${typeof reader.result}.`,
 			)
 		}
 		reader.onerror = e => {
-			console.warn("File reader error: " + e);
+			console.warn("File reader error: " + JSON.stringify(e));
+			reject
 		}
 		reader.onprogress = e => {
 			console.warn("File reader prog: " + e);
@@ -198,9 +193,15 @@ async function readAsTextAsync(mediaBlob: Blob, magazineName: string) {
 async function fetchPdfAsync(url: string, currentMagName: string, isAndroid: boolean): Promise < string > {
 	console.log('Getting blob for ' + url);
 	const mediaBlob = await urlToBlob(url);
-	console.log('Calling readAsTextAsync with ' + JSON.stringify(mediaBlob).substring(0,50) + ' and ' + currentMagName);
-	const readRt = await readAsTextAsync(mediaBlob, currentMagName);
-	return readRt;
+	
+	if (JSON.stringify(mediaBlob) != "\"\"") {
+		console.log('Calling readAsTextAsync with ' + JSON.stringify(mediaBlob).substring(0,50) + ' and ' + currentMagName);
+		const readRt = await readAsTextAsync(mediaBlob, currentMagName);
+		return readRt;
+	} else {
+		console.log("Null mediaBlob return");
+		return undefined;
+	}
 }
 
 var xhr = new XMLHttpRequest()
@@ -213,6 +214,9 @@ async function urlToBlob(url) {
 			}
 		}
 		xhr.open('GET', url)
+		xhr.onabort = () => {
+			resolve(null);
+		}
 		xhr.responseType = 'blob'
 		xhr.send()
 	})
@@ -248,6 +252,7 @@ type State = {
 	data ? : string,
 }
 
+var downloading = false;
 class PdfReader extends Component < Props, State > {
 	state = { ready: false, android: false, ios: false, data: undefined, renderedOnce: false, progressValue: 0.0}
 
@@ -269,9 +274,13 @@ class PdfReader extends Component < Props, State > {
 	}
 	
 	stopDownload() {
-		console.warn("Stopping article download");
-		xhr.abort();
-		reader.abort();
+		if (downloading === true) {
+			console.warn("Stopping article download");
+			xhr.abort();
+			reader.abort();
+		} else {
+			console.log("Downloading: " + downloading);
+		}
 	}
 
 	async init() {
@@ -299,7 +308,10 @@ class PdfReader extends Component < Props, State > {
 				xhr.addEventListener('progress', this.updateLoaderBlob);
 				//reader.addEventListener('progress', this.updateLoaderReadText);
 				
+				downloading = true;
 				data = await fetchPdfAsync(source.uri, magName.name, true)
+				downloading = false;
+				
 				console.log("data prop created for Android using downloaded data: " + data.substring(0,200));
 				ready = !!data
 			} else if (ios && source.base64) {
@@ -318,10 +330,17 @@ class PdfReader extends Component < Props, State > {
 				xhr.addEventListener('progress', this.updateLoaderBlob);
 				//reader.addEventListener('progress', this.updateLoaderReadText);
 				
-				await writePDFAsync(await fetchPdfAsync(source.uri, magName.name, false));
-				data = pdfPath;
-				console.log("data prop created for iOS using downloaded data at: " + data);
-				ready = true;
+				downloading = true;
+				var willRender = await writePDFAsync(await fetchPdfAsync(source.uri, magName.name, false));
+				downloading = false;
+				
+				if (willRender != undefined) {
+					data = pdfPath;
+					console.log("data prop created for iOS using downloaded data at: " + data);
+					ready = true;
+				} else {
+					return;
+				}
 			} else {
 				console.error('Source prop is malformed! ' + JSON.stringify(source))
 				return
@@ -340,14 +359,12 @@ class PdfReader extends Component < Props, State > {
 			this.setState({ ready, data })
 			this.setState({ renderedOnce: true })
 		} catch (error) {
-			alert('Sorry, an error occurred.')
-			console.log("Error: " + error)
+			console.warn("PDFReader Error: " + error)
 		}
 	}
 
 	componentDidMount() {
-		//console.log("Created PdfReader instance");
-		//checkPath();
+		console.log("Mounted PdfReader");
 		this.init()
 	}
 
