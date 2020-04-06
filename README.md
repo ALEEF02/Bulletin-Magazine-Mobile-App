@@ -1,11 +1,12 @@
 # Bulletin Magazine Mobile App
 Made for ETHS by Anthony Ford (ALEEF02)
 ## Installation
+To install and run the project locally, do the following  
 1. Install NodeJS 12.10.0 to your computer
 > Ensure that you check the box to 'Automatically install the necessary tools'
 2. Install the latest version of Python 2.7 to your computer
 > Ensure that you check the box to 'add python.exe to Path'
-3. Install Expo with the command `npm install -g expo-cli`
+3. Install the Expo-CLI with the command `npm install -g expo-cli`
 4. Install the remaining node modules with `npm install`
 5. Run with `npm start`
 
