@@ -7,7 +7,7 @@
       "ios",
       "android"
     ],
-    "version": "1.1.0",
+    "version": "1.1.1",
     "orientation": "portrait",
     "primaryColor": "#0000FF",
     "icon": "./assets/images/icon.png",
@@ -24,12 +24,12 @@
     ],
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "1.1.0",
+      "buildNumber": "1.1.1",
       "bundleIdentifier": "com.eltorohs.bulletin"
     },
     "android": {
       "package": "com.eltorohs.bulletin",
-      "versionCode": 2,
+      "versionCode": 3,
       "permissions": [
         "MANAGE_DOCUMENTS",
         "READ_EXTERNAL_STORAGE",
